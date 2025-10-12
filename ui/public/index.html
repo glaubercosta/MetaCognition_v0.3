@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Agent Orchestrator UI</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/javascript">
+      const e = React.createElement;
+      function App(){
+        const [agents, setAgents] = React.useState([]);
+        const [flows, setFlows] = React.useState([]);
+        const [name, setName] = React.useState("");
+        const [role, setRole] = React.useState("");
+        const [prompt, setPrompt] = React.useState("");
+        const [editingId, setEditingId] = React.useState("");
+        const [engine, setEngine] = React.useState("crewai");
+        const [flowName, setFlowName] = React.useState("");
+        const [flowId, setFlowId] = React.useState("");
+        const [runLog, setRunLog] = React.useState(null);
+        const [expanded, setExpanded] = React.useState({});
+        const [copied, setCopied] = React.useState({});
+
+        const api = (path, opts={}) => fetch(path, Object.assign({headers: {'Content-Type':'application/json'}}, opts));
+
+        const load = async () => {
+          const a = await api('/agents'); setAgents(await a.json());
+          const f = await api('/flows'); setFlows(await f.json());
+        };
+        React.useEffect(()=>{load();},[]);
+
+        const resetAgentForm = () => { setName(""); setRole(""); setPrompt(""); setEditingId(""); };
+        const createAgent = async () => {
+          await api('/agents', {method:'POST', body: JSON.stringify({name, role, prompt})});
+          resetAgentForm();
+          load();
+        };
+        const updateAgent = async () => {
+          if(!editingId){ return; }
+          await api(`/agents/${editingId}`, {method:'PUT', body: JSON.stringify({name, role, prompt})});
+          resetAgentForm();
+          load();
+        };
+        const startEdit = (a) => {
+          setEditingId(a.id);
+          setName(a.name || "");
+          setRole(a.role || "");
+          setPrompt(a.prompt || "");
+        };
+        const createFlow = async () => {
+          const res = await api('/flows', {method:'POST', body: JSON.stringify({name: flowName, graph_json: {nodes:[{id:"a"},{id:"b"}], edges:[{from:"a",to:"b"}]}})});
+          const j = await res.json(); setFlowId(j.id); load();
+        };
+        const runFlow = async () => {
+          if(!flowId){ alert('Crie ou selecione um fluxo'); return; }
+          const r = await api('/orchestrate/run', {method:'POST', body: JSON.stringify({engine, flow_id: flowId, inputs:{}})});
+          const j = await r.json(); setRunLog(j);
+        };
+        const exportAgents = async (fmt) => {
+          const r = await fetch('/agents/export?format='+fmt);
+          const t = await r.text();
+          const blob = new Blob([t], {type: fmt==='yaml'?'text/yaml':'application/json'});
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'agents_export.'+(fmt==='yaml'?'yaml':'json');
+          a.click();
+        };
+        const exportFlows = async (fmt) => {
+          const r = await fetch('/flows/export?format='+fmt);
+          const t = await r.text();
+          const blob = new Blob([t], {type: fmt==='yaml'?'text/yaml':'application/json'});
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'flows_export.'+(fmt==='yaml'?'yaml':'json');
+          a.click();
+        };
+
+        const togglePrompt = (id) => {
+          setExpanded(prev => Object.assign({}, prev, {[id]: !prev[id]}));
+        };
+
+        const copyPrompt = async (id, text) => {
+          try {
+            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text || '');
+            } else {
+              const ta = document.createElement('textarea');
+              ta.value = text || '';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+            }
+            setCopied(prev => Object.assign({}, prev, {[id]: true}));
+            setTimeout(() => setCopied(prev => Object.assign({}, prev, {[id]: false})), 1500);
+          } catch(e) { console.error('Copy failed', e); }
+        };
+
+        return e('div', {className:'container'},
+          e('h1', null, 'Agent Orchestrator UI'),
+          e('section', null,
+            e('h2', null, 'Agentes'),
+            e('div', {className:'row'},
+              e('input', {placeholder:'Nome', value:name, onChange: e=>setName(e.target.value)}),
+              e('input', {placeholder:'Role', value:role, onChange: e=>setRole(e.target.value)}),
+              e('input', {placeholder:'Prompt', value:prompt, onChange: e=>setPrompt(e.target.value)}),
+              editingId
+                ? e(React.Fragment, null,
+                    e('button', {onClick:updateAgent, className:'btn btn-primary'}, 'Salvar'),
+                    e('button', {onClick:resetAgentForm, className:'btn btn-secondary'}, 'Cancelar')
+                  )
+                : e('button', {onClick:createAgent, className:'btn btn-primary'}, 'Criar')
+            ),
+            e('div', {className:'export'},
+              e('button', {onClick:()=>exportAgents('json'), className:'btn btn-secondary'}, 'Exportar JSON'),
+              e('button', {onClick:()=>exportAgents('yaml'), className:'btn btn-secondary'}, 'Exportar YAML'),
+            ),
+            e('ul', null, agents.map(a=>
+              e('li', {key:a.id},
+                e('div', {style:{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}},
+                  e('span', null, a.name + (a.role ? ' - ' + a.role : '')),
+                  e('button', {onClick:()=>startEdit(a), className:'btn btn-success'}, 'Editar'),
+                  e('button', {onClick:()=>togglePrompt(a.id), className:'btn btn-secondary'}, expanded[a.id] ? 'Ocultar prompt' : 'Ver prompt'),
+                  e('button', {onClick:()=>copyPrompt(a.id, a.prompt), className:'btn btn-primary'}, copied[a.id] ? 'Copiado!' : 'Copiar prompt')
+                ),
+                expanded[a.id] ? e('pre', null, a.prompt || '(sem prompt)') : null
+              )
+            ))
+          ),
+          e('section', null,
+            e('h2', null, 'Fluxos'),
+            e('div', {className:'row'},
+              e('input', {placeholder:'Nome do fluxo', value:flowName, onChange: e=>setFlowName(e.target.value)}),
+              e('button', {onClick:createFlow, className:'btn btn-primary'}, 'Criar fluxo')
+            ),
+            e('div', {className:'row'},
+              e('select', {value:flowId, onChange:e=>setFlowId(e.target.value)},
+                e('option', {value:''}, 'Selecione um fluxo'),
+                flows.map(f=> e('option', {key:f.id, value:f.id}, f.name))
+              ),
+              e('select', {value:engine, onChange:e=>setEngine(e.target.value)},
+                e('option', {value:'crewai'}, 'CrewAI'),
+                e('option', {value:'robotgreen'}, 'RobotGreenAI')
+              ),
+              e('button', {onClick:runFlow, className:'btn btn-primary'}, 'Executar fluxo')
+            ),
+            e('div', {className:'export'},
+              e('button', {onClick:()=>exportFlows('json'), className:'btn btn-secondary'}, 'Exportar JSON'),
+              e('button', {onClick:()=>exportFlows('yaml'), className:'btn btn-secondary'}, 'Exportar YAML'),
+            ),
+            runLog ? e('pre', null, JSON.stringify(runLog, null, 2)) : null
+          )
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(App));
+    </script>
+  </body>
+  </html>
+

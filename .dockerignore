@@ -1,0 +1,31 @@
+# VCS
+.git
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# App data and caches
+app/data/
+data/
+*.log
+.cache/
+
+# Environment
+.env
+.python-version
+
+# Node/Frontend
+ui/node_modules/
+ui/dist/
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
+
