@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import os
 from .db import init_db
 from .routers import agents, flows, orchestrate, evals
 from .routers import agents_io, flows_io
@@ -30,5 +31,9 @@ app.include_router(evals.router)
 app.include_router(agents_io.router)
 app.include_router(flows_io.router)
 
-# Serve UI static (React CDN)
-app.mount("/", StaticFiles(directory="ui/public", html=True), name="ui")
+# Serve UI static: prefer built React app in ./public if present; otherwise fallback to legacy ./ui/public
+public_dir = "public"
+legacy_ui_dir = os.path.join("ui", "public")
+static_dir = public_dir if os.path.exists(os.path.join(public_dir, "index.html")) else legacy_ui_dir
+
+app.mount("/", StaticFiles(directory=static_dir, html=True), name="ui")

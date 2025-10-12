@@ -37,3 +37,6 @@ Thumbs.db
 # Others
 *.bak
 *.swp
+
+# Dev runtime artifacts
+ProjectArtifacts/dev/
