@@ -23,9 +23,10 @@ data/
 # Node/Frontend
 ui/node_modules/
 ui/dist/
+frontend/node_modules/
+frontend/dist/
 
 # OS/editor noise
 .DS_Store
 .vscode/
 .idea/
-
