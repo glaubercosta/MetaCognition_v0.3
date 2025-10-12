@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Test & type check caches
+.mypy_cache/
+.pytest_cache/
+
+# SQLite DB
+*.db
+data/
+
+# Docker
+*.log
+
+# Node/React (if built in future)
+node_modules/
+ui/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Others
+*.bak
+*.swp
