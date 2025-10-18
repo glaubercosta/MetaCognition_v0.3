@@ -166,6 +166,12 @@ export default function Orchestration() {
                   <Label className="text-xs text-muted-foreground">Engine</Label>
                   <p className="text-lg font-semibold">{result.engine}</p>
                 </div>
+                {result.request_id && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Request ID</Label>
+                    <p className="text-xs font-mono">{result.request_id}</p>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs text-muted-foreground">Result</Label>
                   <pre className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto">

@@ -38,8 +38,8 @@ def test_e2e_create_agent_flow_and_run_fake():
     data = rr.json()
     assert data["engine"] == "fake"
     assert data["flow_id"] == flow_id
+    assert isinstance(data.get("request_id"), str) and len(data["request_id"]) > 0
     assert isinstance(data.get("duration_ms"), int)
     plan = data["plan"]
     assert plan["executed_nodes"] == ["n1", "n2"]
     assert set(plan["artifacts"].keys()) == {"n1", "n2"}
-

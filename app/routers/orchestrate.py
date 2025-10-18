@@ -40,6 +40,7 @@ def run(req: OrchestrationRequest):
 
     # Enrich logs with request_id, engine and flow_id and append a summary event
     request_id = str(uuid.uuid4())
+    result.request_id = request_id  # type: ignore
     enriched_logs = []
     for line in (result.logs or []):  # type: ignore
         try:

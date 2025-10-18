@@ -26,6 +26,7 @@ class OrchestrationResult(BaseModel):
     plan: OrchestrationPlan
     logs: List[str]
     duration_ms: Optional[int] = None
+    request_id: Optional[str] = None
 
 
 class OrchestratorEngine:
