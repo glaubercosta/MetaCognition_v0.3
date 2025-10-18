@@ -19,7 +19,7 @@ import { PageHeader } from "@/components/PageHeader";
 export default function Orchestration() {
   const { toast } = useToast();
   const [selectedFlow, setSelectedFlow] = useState<string>("");
-  const [selectedEngine, setSelectedEngine] = useState<"crewai" | "robotgreen">("crewai");
+  const [selectedEngine, setSelectedEngine] = useState<"crewai" | "robotgreen" | "fake">("crewai");
   const [inputs, setInputs] = useState("{}");
   const [result, setResult] = useState<any>(null);
 
@@ -101,7 +101,7 @@ export default function Orchestration() {
               <Label htmlFor="engine">Engine</Label>
               <Select
                 value={selectedEngine}
-                onValueChange={(value) => setSelectedEngine(value as "crewai" | "robotgreen")}
+                onValueChange={(value) => setSelectedEngine(value as "crewai" | "robotgreen" | "fake")}
               >
                 <SelectTrigger id="engine">
                   <SelectValue />
@@ -109,6 +109,7 @@ export default function Orchestration() {
                 <SelectContent>
                   <SelectItem value="crewai">CrewAI</SelectItem>
                   <SelectItem value="robotgreen">RobotGreenAI</SelectItem>
+                  <SelectItem value="fake">Fake</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -159,7 +160,7 @@ export default function Orchestration() {
               <div className="space-y-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Duration</Label>
-                  <p className="text-lg font-semibold">{result.duration_ms}ms</p>
+                  <p className="text-lg font-semibold">{result.duration_ms ?? "-"}ms</p>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Engine</Label>
@@ -168,9 +169,17 @@ export default function Orchestration() {
                 <div>
                   <Label className="text-xs text-muted-foreground">Result</Label>
                   <pre className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto">
-                    {JSON.stringify(result.result, null, 2)}
+                    {JSON.stringify(result.plan ?? result.result ?? result, null, 2)}
                   </pre>
                 </div>
+                {result.logs && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Logs</Label>
+                    <pre className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto">
+                      {JSON.stringify(result.logs, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center py-12 text-muted-foreground">

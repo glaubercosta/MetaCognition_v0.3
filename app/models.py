@@ -11,7 +11,7 @@ class AgentCreate(BaseModel):
 
 class Agent(AgentCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str = Field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
 
 class FlowCreate(BaseModel):
     name: str
@@ -20,7 +20,7 @@ class FlowCreate(BaseModel):
 
 class Flow(FlowCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str = Field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())
 
 class EvaluationCreate(BaseModel):
     agent_id: str
@@ -29,4 +29,4 @@ class EvaluationCreate(BaseModel):
 
 class Evaluation(EvaluationCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str = Field(default_factory=lambda: datetime.datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.datetime.now(datetime.UTC).isoformat())

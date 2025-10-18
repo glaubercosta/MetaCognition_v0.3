@@ -30,6 +30,22 @@ data/
 node_modules/
 ui/build/
 
+# Frontend/Node specifics
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+dist-ssr
+*.local
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -40,3 +56,6 @@ Thumbs.db
 
 # Dev runtime artifacts
 ProjectArtifacts/dev/
+
+# Management artifacts
+ManagementArtifacts/

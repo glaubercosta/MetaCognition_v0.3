@@ -33,15 +33,18 @@ export interface Evaluation {
 
 export interface OrchestrationRequest {
   flow_id: string;
-  engine: "crewai" | "robotgreen";
+  engine: "crewai" | "robotgreen" | "fake";
   inputs?: Record<string, any>;
 }
 
 export interface OrchestrationResult {
-  flow_id: number;
+  flow_id: string;
   engine: string;
-  result: any;
-  duration_ms: number;
+  // Backend may return either {plan, logs} or {result, duration_ms}
+  plan?: any;
+  logs?: string[];
+  result?: any;
+  duration_ms?: number;
 }
 
 // Health

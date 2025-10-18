@@ -145,7 +145,8 @@
               ),
               e('select', {value:engine, onChange:e=>setEngine(e.target.value)},
                 e('option', {value:'crewai'}, 'CrewAI'),
-                e('option', {value:'robotgreen'}, 'RobotGreenAI')
+                e('option', {value:'robotgreen'}, 'RobotGreenAI'),
+                e('option', {value:'fake'}, 'Fake')
               ),
               e('button', {onClick:runFlow, className:'btn btn-primary'}, 'Executar fluxo')
             ),
@@ -163,4 +164,3 @@
     </script>
   </body>
   </html>
-

@@ -2,11 +2,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+from contextlib import asynccontextmanager
 from .db import init_db
 from .routers import agents, flows, orchestrate, evals
 from .routers import agents_io, flows_io
 
-app = FastAPI(title="Agent Orchestrator API", version="0.2.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    init_db()
+    yield
+    # Shutdown (no-op for now)
+
+
+app = FastAPI(title="Agent Orchestrator API", version="0.3.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,20 +26,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-def startup():
-    init_db()
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+# Register IO routes before dynamic ID routes to avoid collisions like /agents/export matching /agents/{id}
+app.include_router(agents_io.router)
+app.include_router(flows_io.router)
 app.include_router(agents.router)
 app.include_router(flows.router)
 app.include_router(orchestrate.router)
 app.include_router(evals.router)
-app.include_router(agents_io.router)
-app.include_router(flows_io.router)
 
 # Serve UI static: prefer built React app in ./public if present; otherwise fallback to legacy ./ui/public
 public_dir = "public"
