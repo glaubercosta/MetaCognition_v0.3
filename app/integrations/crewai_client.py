@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 import time
 import httpx
+import os
 
 
 class CrewAIClient:
@@ -36,7 +37,21 @@ class CrewAIClient:
         Intentionally not implemented in this checkpoint to avoid network dependency.
         """
         ctx = context or {}
-        payload = {"prompt": prompt, "context": ctx}
+        # Build OpenAI-like payload (messages + parameters) with model
+        model = ctx.get("model") or os.getenv("CREWAI_MODEL", "crewai-large")
+        system_prompt = ctx.get("system_prompt") or "You are a helpful assistant."
+        parameters = ctx.get("parameters") or {}
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+        trimmed_ctx = {k: v for k, v in ctx.items() if k not in ("model", "system_prompt", "parameters")}
+        payload = {
+            "model": model,
+            "messages": messages,
+            "parameters": parameters,
+            "context": trimmed_ctx,
+        }
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
         last_exc: Optional[Exception] = None
@@ -85,6 +100,11 @@ class CrewAIClient:
             "status": "ok",
             "output": f"crewai-real-{node_id}{('-' + prompt_snippet) if prompt_snippet else ''}",
         }
+
+
+
+
+
 
 
 
