@@ -19,6 +19,12 @@ Added
   - `pytest-cov` added to `requirements.txt`
 - Sprint 2 plan document:
   - `ManagementArtifacts/Documentacao/SPRINT_2_PLAN.md`
+ - Multipart import endpoints + UI file upload:
+   - API: `app/routers/agents_io.py`, `app/routers/flows_io.py` (UploadFile + Form)
+   - UI: `frontend/src/lib/api.ts` (importAgentsFile/importFlowsFile), `frontend/src/pages/ImportExport.tsx`
+ - CrewAI real adapter path with httpx client (feature flags):
+   - Client: `app/integrations/crewai_client.py` (timeout/retries/backoff; response normalization)
+   - Adapter: `app/orchestration/engines/crewai_real.py` (dry-run/http modes)
 
 Changed
 - API lifecycle migrated to FastAPI Lifespan; removed `@app.on_event`:
@@ -29,9 +35,12 @@ Changed
   - `app/main.py`
 - UI Orchestration page result rendering tolerates both `{plan, logs}` and `{result, duration_ms}`:
   - `frontend/src/pages/Orchestration.tsx`
+ - Engines now publish `duration_ms` and structured JSON logs (ts, level, msg, node):
+   - `app/orchestration/engines/fake_adapter.py`, `crewai_adapter.py`, `robotgreen_adapter.py`, `crewai_real.py`
 - Branding/meta updates and minor docs:
   - `public/index.html` title/OG/Twitter
   - `README.md` adds local pytest with `PYTHONPATH` and coverage snippet
+  - README envs for CrewAI flags (CREWAI_MODE, CREWAI_API_KEY, CREWAI_HTTP_MODE)
   - `ManagementArtifacts/Documentacao/ROADMAP.md` references Sprint 2 plan
   - `review_versao0.3-functional.md` aligned to Vite frontend
 - Backlog updates (statuses and new items):
