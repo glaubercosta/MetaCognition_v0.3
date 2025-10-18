@@ -175,9 +175,28 @@ export default function Orchestration() {
                 {result.logs && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Logs</Label>
-                    <pre className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto">
-                      {JSON.stringify(result.logs, null, 2)}
-                    </pre>
+                    <div className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto space-y-1">
+                      {(result.logs as string[]).map((line: string, idx: number) => {
+                        let obj: any = null;
+                        try { obj = JSON.parse(line); } catch {}
+                        if (obj && typeof obj === 'object') {
+                          return (
+                            <div key={idx} className="flex items-center gap-3">
+                              <span className="text-muted-foreground">{obj.ts ?? '-'}</span>
+                              <span className="rounded bg-background px-2 py-0.5 border text-xs">{obj.node ?? '-'}</span>
+                              <span>{obj.msg ?? JSON.stringify(obj)}</span>
+                            </div>
+                          )
+                        }
+                        return (
+                          <div key={idx} className="flex items-center gap-3">
+                            <span className="text-muted-foreground">-</span>
+                            <span className="rounded bg-background px-2 py-0.5 border text-xs">-</span>
+                            <span>{line}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

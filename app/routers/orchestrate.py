@@ -6,6 +6,7 @@ from ..orchestration.engines.robotgreen_adapter import RobotGreenEngine
 from ..orchestration.engines.fake_adapter import FakeEngine
 from ..orchestration.engines.crewai_real import RealCrewAIEngine
 import os
+import uuid, json, datetime
 
 router = APIRouter(prefix="/orchestrate", tags=["orchestrate"])
 
@@ -36,4 +37,46 @@ def run(req: OrchestrationRequest):
     except NotImplementedError as e:
         raise HTTPException(501, str(e))
     result.flow_id = f.id  # type: ignore
+
+    # Enrich logs with request_id, engine and flow_id and append a summary event
+    request_id = str(uuid.uuid4())
+    enriched_logs = []
+    for line in (result.logs or []):  # type: ignore
+        try:
+            obj = json.loads(line)
+            if isinstance(obj, dict):
+                obj["request_id"] = request_id
+                obj["engine"] = result.engine
+                obj["flow_id"] = f.id
+                enriched_logs.append(json.dumps(obj, ensure_ascii=False))
+            else:
+                raise ValueError("non-dict")
+        except Exception:
+            enriched_logs.append(
+                json.dumps(
+                    {
+                        "ts": datetime.datetime.now(datetime.UTC).isoformat(),
+                        "level": "info",
+                        "msg": str(line),
+                        "request_id": request_id,
+                        "engine": result.engine,
+                        "flow_id": f.id,
+                    },
+                    ensure_ascii=False,
+                )
+            )
+
+    summary = {
+        "ts": datetime.datetime.now(datetime.UTC).isoformat(),
+        "level": "info",
+        "msg": "orchestration_summary",
+        "request_id": request_id,
+        "engine": result.engine,
+        "flow_id": f.id,
+        "duration_ms": result.duration_ms,
+        "executed_nodes": len(result.plan.executed_nodes),  # type: ignore
+        "artifacts": len(result.plan.artifacts),  # type: ignore
+    }
+    enriched_logs.append(json.dumps(summary, ensure_ascii=False))
+    result.logs = enriched_logs  # type: ignore
     return result
