@@ -12,6 +12,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Secrets pattern check (simple)
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATTERN='(AWS_|SECRET|API_KEY|TOKEN|PASSWORD|BEGIN RSA PRIVATE KEY)'
+          ALLOWLIST='(\.example$|README|CHANGELOG|INTEGRATION_NOTES|INTEGRACAO_DESIGN)'
+          matches=$(git ls-files | xargs -r grep -nE "$PATTERN" || true)
+          if [[ -n "$matches" ]]; then
+            filtered=$(echo "$matches" | grep -Ev "$ALLOWLIST" || true)
+            if [[ -n "$filtered" ]]; then
+              echo "Potential secrets detected:" >&2
+              echo "$filtered" >&2
+              exit 1
+            fi
+          fi
       - name: Check for banned paths in tracked files
         shell: bash
         run: |
@@ -55,7 +70,13 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests with coverage
-        run: pytest -q --cov=app --cov-report=term-missing
+        run: pytest -q --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
 
   build-docker:
     runs-on: ubuntu-latest
