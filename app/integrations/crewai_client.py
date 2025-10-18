@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Any, Dict, Optional
 import time
@@ -26,6 +26,9 @@ class CrewAIClient:
         self.timeout_sec = timeout_sec
         self.max_retries = max_retries
         self.backoff_sec = backoff_sec
+        # Allow runtime override of run path
+        import os as _os
+        self.run_path = _os.getenv("CREWAI_RUN_PATH", "/v1/run")
 
     def run_node(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -40,7 +43,8 @@ class CrewAIClient:
         for attempt in range(self.max_retries + 1):
             try:
                 with httpx.Client(timeout=self.timeout_sec) as client:
-                    resp = client.post(f"{self.base_url}/v1/run", json=payload, headers=headers)
+                    url = f"{self.base_url}{self.run_path}"
+                    resp = client.post(url, json=payload, headers=headers)
                     if resp.status_code >= 500:
                         raise httpx.HTTPStatusError("server error", request=resp.request, response=resp)
                     resp.raise_for_status()
@@ -81,3 +85,7 @@ class CrewAIClient:
             "status": "ok",
             "output": f"crewai-real-{node_id}{('-' + prompt_snippet) if prompt_snippet else ''}",
         }
+
+
+
+
