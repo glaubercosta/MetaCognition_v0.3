@@ -44,7 +44,7 @@ class RealCrewAIEngine(OrchestratorEngine):
             if mode == "http":
                 resp = client.run_node(
                     prompt=build_prompt_for_node(nid),
-                    context={"node": nid, "flow_nodes": len(nodes), "edges": flow.get("edges", [])},
+                    context={"node": nid, "model": model, "flow_nodes": len(nodes), "edges": flow.get("edges", [])},
                 )
             else:
                 resp = client.simulate(nid, prompt_snippet)
@@ -57,3 +57,4 @@ class RealCrewAIEngine(OrchestratorEngine):
         plan = OrchestrationPlan(executed_nodes=executed, artifacts=artifacts, routing="sequential")
         duration_ms = int((time.perf_counter() - start) * 1000)
         return OrchestrationResult(engine="crewai", flow_id="unknown", plan=plan, logs=logs, duration_ms=duration_ms)
+
