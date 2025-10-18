@@ -1,4 +1,5 @@
-from typing import Dict, Any
+﻿from typing import Dict, Any
+import time, datetime, json
 from ..engine import (
     OrchestratorEngine,
     OrchestrationResult,
@@ -18,7 +19,16 @@ class FakeEngine(OrchestratorEngine):
         if inputs.get("simulate_error"):
             raise ValueError(str(inputs.get("simulate_error")))
 
-        logs = ["[FakeEngine] Execução simulada iniciada."]
+        start = time.perf_counter()
+        logs: list[str] = []
+
+        def log(msg: str, node: str | None = None):
+            entry = {"ts": datetime.datetime.now(datetime.UTC).isoformat(), "level": "info", "msg": msg}
+            if node:
+                entry["node"] = node
+            logs.append(json.dumps(entry, ensure_ascii=False))
+
+        log("FakeEngine: execução simulada iniciada")
         executed: list[str] = []
         artifacts: dict[str, OrchestrationArtifact] = {}
 
@@ -31,8 +41,9 @@ class FakeEngine(OrchestratorEngine):
             snippet = (base_prompt or "")[:24]
             out = f"fake-{nid}{('-' + snippet) if snippet else ''}"
             artifacts[nid] = OrchestrationArtifact(status="ok", output=out)
-            logs.append(f"[FakeEngine] Node {nid} executado.")
+            log("FakeEngine: node executado", node=nid)
 
-        logs.append("[FakeEngine] Concluída.")
+        log("FakeEngine: concluída")
         plan = OrchestrationPlan(executed_nodes=executed, artifacts=artifacts, routing="sequential")
-        return OrchestrationResult(engine="fake", flow_id="unknown", plan=plan, logs=logs)
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        return OrchestrationResult(engine="fake", flow_id="unknown", plan=plan, logs=logs, duration_ms=duration_ms)

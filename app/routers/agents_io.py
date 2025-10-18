@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, UploadFile, File, Form
 from fastapi.responses import PlainTextResponse, JSONResponse
 from typing import Any
 import yaml
@@ -16,9 +16,24 @@ def export_agents(format: str = "json"):
     return JSONResponse(agents)
 
 @router.post("/import")
-def import_agents(payload: Any = Body(...), format: str = "json"):
+def import_agents(
+    payload: Any = Body(None),
+    format: str = "json",
+    file: UploadFile | None = File(default=None),
+    file_format: str | None = Form(default=None),
+):
     try:
-        if isinstance(payload, str) and format.lower() == "yaml":
+        # Multipart file upload takes precedence
+        if file is not None:
+            raw = file.file.read().decode("utf-8")
+            use_fmt = (file_format or format or "json").lower()
+            if use_fmt == "yaml":
+                items = yaml.safe_load(raw) or []
+            else:
+                import json
+                data = json.loads(raw)
+                items = data.get("items", data) if isinstance(data, dict) else data
+        elif isinstance(payload, str) and format.lower() == "yaml":
             items = yaml.safe_load(payload) or []
         elif isinstance(payload, list):
             items = payload

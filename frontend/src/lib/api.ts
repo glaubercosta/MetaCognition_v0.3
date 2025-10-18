@@ -179,3 +179,27 @@ export const importFlows = async (data: string, format: "json" | "yaml" = "json"
   if (!response.ok) throw new Error("Failed to import flows");
   return response.json();
 };
+
+export const importAgentsFile = async (file: File, fileFormat: "json" | "yaml"): Promise<any> => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("file_format", fileFormat);
+  const response = await fetch(`${API_BASE_URL}/agents/import`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) throw new Error("Failed to import agents file");
+  return response.json();
+};
+
+export const importFlowsFile = async (file: File, fileFormat: "json" | "yaml"): Promise<any> => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("file_format", fileFormat);
+  const response = await fetch(`${API_BASE_URL}/flows/import`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) throw new Error("Failed to import flows file");
+  return response.json();
+};

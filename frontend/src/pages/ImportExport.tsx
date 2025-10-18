@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { exportAgents, importAgents, exportFlows, importFlows } from "@/lib/api";
+import { exportAgents, importAgents, exportFlows, importFlows, importAgentsFile, importFlowsFile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,8 @@ export default function ImportExport() {
   const [format, setFormat] = useState<"json" | "yaml">("json");
   const [importData, setImportData] = useState("");
   const [exportedData, setExportedData] = useState("");
+  const [agentsFile, setAgentsFile] = useState<File | null>(null);
+  const [flowsFile, setFlowsFile] = useState<File | null>(null);
 
   const exportAgentsMutation = useMutation({
     mutationFn: () => exportAgents(format),
@@ -160,6 +162,20 @@ export default function ImportExport() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="agents-file">Upload file</Label>
+                  <input id="agents-file" type="file" accept={format === 'json' ? '.json' : '.yaml,.yml'} onChange={(e)=> setAgentsFile(e.target.files?.[0] || null)} />
+                  <Button variant="outline" className="w-full" disabled={!agentsFile}
+                    onClick={async ()=>{
+                      if(!agentsFile) return;
+                      await importAgentsFile(agentsFile, format);
+                      setAgentsFile(null);
+                      queryClient.invalidateQueries({ queryKey: ["agents"] });
+                      toast({ title: "Agents imported successfully (file)" });
+                    }}>
+                    <Upload className="mr-2 h-4 w-4" /> Import Agents (File)
+                  </Button>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="import-agents">Paste {format.toUpperCase()} data</Label>
                   <Textarea
                     id="import-agents"
@@ -226,6 +242,20 @@ export default function ImportExport() {
                 <CardDescription>Upload flows from {format.toUpperCase()}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="flows-file">Upload file</Label>
+                  <input id="flows-file" type="file" accept={format === 'json' ? '.json' : '.yaml,.yml'} onChange={(e)=> setFlowsFile(e.target.files?.[0] || null)} />
+                  <Button variant="outline" className="w-full" disabled={!flowsFile}
+                    onClick={async ()=>{
+                      if(!flowsFile) return;
+                      await importFlowsFile(flowsFile, format);
+                      setFlowsFile(null);
+                      queryClient.invalidateQueries({ queryKey: ["flows"] });
+                      toast({ title: "Flows imported successfully (file)" });
+                    }}>
+                    <Upload className="mr-2 h-4 w-4" /> Import Flows (File)
+                  </Button>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="import-flows">Paste {format.toUpperCase()} data</Label>
                   <Textarea

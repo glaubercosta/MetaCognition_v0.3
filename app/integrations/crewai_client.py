@@ -45,12 +45,27 @@ class CrewAIClient:
                         raise httpx.HTTPStatusError("server error", request=resp.request, response=resp)
                     resp.raise_for_status()
                     data = resp.json()
-                    # Expecting a shape like: { status: 'ok'|'error', output?: str, error?: str }
-                    return {
-                        "status": data.get("status", "ok"),
-                        "output": data.get("output"),
-                        "error": data.get("error"),
-                    }
+                    # Normalize possible response shapes into {status, output, error}
+                    # 1) { status: 'ok'|'error', output?: str, error?: str }
+                    if isinstance(data, dict) and ("status" in data or "output" in data or "error" in data):
+                        status = data.get("status", "ok")
+                        output = data.get("output")
+                        error = data.get("error")
+                        return {"status": status, "output": output, "error": error}
+                    # 2) OpenAI-like: { choices: [ { message: { content }, text } ] }
+                    if isinstance(data, dict) and "choices" in data:
+                        try:
+                            choices = data.get("choices") or []
+                            first = choices[0] if choices else {}
+                            content = (
+                                (((first.get("message") or {}).get("content")) if isinstance(first, dict) else None)
+                                or (first.get("text") if isinstance(first, dict) else None)
+                            )
+                            return {"status": "ok", "output": content, "error": None}
+                        except Exception:
+                            return {"status": "error", "output": None, "error": "invalid_response_shape"}
+                    # 3) Unknown shape
+                    return {"status": "error", "output": None, "error": "unknown_response_shape"}
             except Exception as e:  # httpx.RequestError | httpx.HTTPStatusError
                 last_exc = e
                 if attempt < self.max_retries:
