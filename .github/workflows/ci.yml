@@ -7,6 +7,36 @@ on:
     branches: ["**"]
 
 jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check for banned paths in tracked files
+        shell: bash
+        run: |
+          set -euo pipefail
+          banned=$(git ls-files | grep -E "(__pycache__|\.pyc$|^public/assets/|^frontend/(dist|node_modules)/)" || true)
+          if [[ -n "$banned" ]]; then
+            echo "Banned tracked files detected:" >&2
+            echo "$banned" >&2
+            exit 1
+          fi
+      - name: Check large tracked files (>5MB), allowlist ProjectArtifacts/**
+        shell: bash
+        run: |
+          set -euo pipefail
+          rc=0
+          while IFS= read -r -d '' f; do
+            # allowlist project artifacts
+            if [[ "$f" == ProjectArtifacts/* ]]; then continue; fi
+            sz=$(stat -c%s "$f")
+            if (( sz > 5242880 )); then
+              echo "Large tracked file (>5MB): $f ($sz bytes)" >&2
+              rc=1
+            fi
+          done < <(git ls-files -z)
+          exit $rc
   test:
     runs-on: ubuntu-latest
     steps:

@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.so
@@ -59,3 +59,9 @@ ProjectArtifacts/dev/
 
 # Management artifacts
 ManagementArtifacts/
+
+# Frontend builds and assets
+frontend/node_modules/
+frontend/dist/
+public/assets/
+
