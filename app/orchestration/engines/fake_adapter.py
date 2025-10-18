@@ -1,5 +1,10 @@
 from typing import Dict, Any
-from ..engine import OrchestratorEngine, OrchestrationResult
+from ..engine import (
+    OrchestratorEngine,
+    OrchestrationResult,
+    OrchestrationPlan,
+    OrchestrationArtifact,
+)
 
 
 class FakeEngine(OrchestratorEngine):
@@ -14,19 +19,20 @@ class FakeEngine(OrchestratorEngine):
             raise ValueError(str(inputs.get("simulate_error")))
 
         logs = ["[FakeEngine] Execução simulada iniciada."]
-        plan = {"executed_nodes": [], "artifacts": {}, "routing": "sequential"}
+        executed: list[str] = []
+        artifacts: dict[str, OrchestrationArtifact] = {}
 
         base_prompt = inputs.get("prompt", "")
 
         for n in nodes:
             nid = n.get("id")
-            plan["executed_nodes"].append(nid)
+            executed.append(nid)
             # Deterministic output: echo node id + optional base prompt fragment
             snippet = (base_prompt or "")[:24]
             out = f"fake-{nid}{('-' + snippet) if snippet else ''}"
-            plan["artifacts"][nid] = {"status": "ok", "output": out}
+            artifacts[nid] = OrchestrationArtifact(status="ok", output=out)
             logs.append(f"[FakeEngine] Node {nid} executado.")
 
         logs.append("[FakeEngine] Concluída.")
+        plan = OrchestrationPlan(executed_nodes=executed, artifacts=artifacts, routing="sequential")
         return OrchestrationResult(engine="fake", flow_id="unknown", plan=plan, logs=logs)
-
