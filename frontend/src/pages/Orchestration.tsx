@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getFlows, runOrchestration, type OrchestrationRequest } from "@/lib/api";
+import { getFlows, runOrchestration, type OrchestrationRequest, type OrchestrationResult } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ export default function Orchestration() {
   const [selectedFlow, setSelectedFlow] = useState<string>("");
   const [selectedEngine, setSelectedEngine] = useState<"crewai" | "robotgreen" | "fake">("crewai");
   const [inputs, setInputs] = useState("{}");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<OrchestrationResult | null>(null);
 
   const { data: flows } = useQuery({
     queryKey: ["flows"],
@@ -30,7 +30,7 @@ export default function Orchestration() {
 
   const runMutation = useMutation({
     mutationFn: (request: OrchestrationRequest) => runOrchestration(request),
-    onSuccess: (data) => {
+    onSuccess: (data: OrchestrationResult) => {
       setResult(data);
       toast({ title: "Orchestration completed successfully" });
     },
@@ -49,19 +49,33 @@ export default function Orchestration() {
       return;
     }
 
-    let parsedInputs = {};
-    try {
-      parsedInputs = JSON.parse(inputs);
-    } catch {
-      toast({ title: "Invalid JSON in inputs", variant: "destructive" });
-      return;
+    let parsedInputs: Record<string, unknown> | undefined;
+    const trimmed = inputs.trim();
+
+    if (trimmed.length > 0) {
+      let deserialized: unknown;
+      try {
+        deserialized = JSON.parse(trimmed) as unknown;
+      } catch {
+        toast({ title: "Invalid JSON in inputs", variant: "destructive" });
+        return;
+      }
+
+      if (deserialized === null || Array.isArray(deserialized) || typeof deserialized !== "object") {
+        toast({ title: "Inputs must be a JSON object", variant: "destructive" });
+        return;
+      }
+
+      parsedInputs = deserialized as Record<string, unknown>;
     }
 
-    runMutation.mutate({
+    const request: OrchestrationRequest = {
       flow_id: selectedFlow,
       engine: selectedEngine,
-      inputs: parsedInputs,
-    });
+      ...(parsedInputs ? { inputs: parsedInputs } : {}),
+    };
+
+    runMutation.mutate(request);
   };
 
   return (
@@ -178,21 +192,31 @@ export default function Orchestration() {
                     {JSON.stringify(result.plan ?? result.result ?? result, null, 2)}
                   </pre>
                 </div>
-                {result.logs && (
+                {Array.isArray(result.logs) && result.logs.length > 0 && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Logs</Label>
                     <div className="mt-2 rounded-lg bg-muted p-4 text-sm overflow-x-auto space-y-1">
-                      {(result.logs as string[]).map((line: string, idx: number) => {
-                        let obj: any = null;
-                        try { obj = JSON.parse(line); } catch {}
-                        if (obj && typeof obj === 'object') {
+                      {result.logs.map((line, idx) => {
+                        let parsedLine: unknown = null;
+                        try {
+                          parsedLine = JSON.parse(line) as unknown;
+                        } catch (_error) {
+                          parsedLine = null;
+                        }
+
+                        if (parsedLine && typeof parsedLine === "object") {
+                          const record = parsedLine as Record<string, unknown>;
+                          const timestamp = typeof record.ts === "string" ? record.ts : "-";
+                          const node = typeof record.node === "string" ? record.node : "-";
+                          const message =
+                            typeof record.msg === "string" ? record.msg : JSON.stringify(record, null, 2);
                           return (
                             <div key={idx} className="flex items-center gap-3">
-                              <span className="text-muted-foreground">{obj.ts ?? '-'}</span>
-                              <span className="rounded bg-background px-2 py-0.5 border text-xs">{obj.node ?? '-'}</span>
-                              <span>{obj.msg ?? JSON.stringify(obj)}</span>
+                              <span className="text-muted-foreground">{timestamp}</span>
+                              <span className="rounded bg-background px-2 py-0.5 border text-xs">{node}</span>
+                              <span>{message}</span>
                             </div>
-                          )
+                          );
                         }
                         return (
                           <div key={idx} className="flex items-center gap-3">
@@ -200,7 +224,7 @@ export default function Orchestration() {
                             <span className="rounded bg-background px-2 py-0.5 border text-xs">-</span>
                             <span>{line}</span>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   </div>

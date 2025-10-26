@@ -17,6 +17,7 @@
       "title": "Description"
     },
     "graph_json": {
+      "additionalProperties": true,
       "title": "Graph Json",
       "type": "object"
     }

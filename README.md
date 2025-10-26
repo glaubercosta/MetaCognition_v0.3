@@ -24,6 +24,10 @@ Veja `.env.example`:
 - `APP_ENV`, `LOG_LEVEL`
 - `DEFAULT_ENGINE` (`langchain` | `robotgreen` | `fake` | `crewai`*)
 - `DATABASE_URL` (sqlite em `data/app.db` por padrão)
+- Limites de importação:
+  - `IMPORT_MAX_FILE_MB` — tamanho máximo (MB) aceito em uploads; `0` desabilita a verificação.
+  - `IMPORT_MAX_ITEMS` — quantidade máxima de registros por carga (`0` desabilita).
+  - `PROMPT_MAX_BYTES` — tamanho máximo (bytes) dos prompts de agentes; aplicado também em validações.
 
 Engine LangChain/LangGraph:
 - Variáveis específicas do provedor de LLM escolhido (`LANGCHAIN_PROVIDER`, `LANGCHAIN_MODEL`, `LANGCHAIN_API_KEY`, etc.) são mapeadas conforme o conector.

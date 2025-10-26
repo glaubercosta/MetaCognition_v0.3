@@ -9,6 +9,7 @@ MetaCognition e o orquestrador de agentes e fluxos do projeto, oferecendo API Fa
 - Orquestracao com stubs `robotgreen` e `fake`, e novo engine baseado em LangChain/LangGraph (em desenvolvimento).
 - Stub `/evaluations` local enquanto nao ha camada metacognitiva dedicada.
 - UI React para gerenciamento e execucao basica.
+- Validadores dedicados (`/agents/validate`, `/flows/validate`) e conversor Markdown (`/convert/agent-md`).
 
 ## Instalacao
 1. Clone o repositorio e crie um ambiente virtual Python 3.11+ se desejar rodar sem Docker.
@@ -25,6 +26,16 @@ MetaCognition e o orquestrador de agentes e fluxos do projeto, oferecendo API Fa
 - UI: `http://localhost:8000/` servindo o build React.
 - Engine LangChain (em desenvolvimento): configuracoes documentadas abaixo; stubs permanecem disponiveis durante a migracao.
 - Testes: `docker compose run --rm orchestrator pytest -q`.
+
+### Importacao, Validacao e Conversao
+
+- `POST /agents/import` e `POST /flows/import`: aceitam JSON ou YAML (payload direto ou upload `.json/.yaml`). 
+- `POST /agents/validate` e `POST /flows/validate`: retornam `{ok, errors[]}` sem persistir dados, úteis para pré-validação no frontend.
+- `POST /convert/agent-md`: recebe Markdown com front-matter YAML (`---`) e retorna JSON válido de agente.
+- Limites configuráveis:
+  - `IMPORT_MAX_FILE_MB` controla o tamanho máximo de upload (0 = sem limite).
+  - `IMPORT_MAX_ITEMS` limita a quantidade de registros por requisição (0 = sem limite).
+  - `PROMPT_MAX_BYTES` restringe o tamanho dos prompts e é aplicado nos modelos Pydantic (`AgentCreate`).
 
 ## Configuracoes Avancadas
 - Variaveis principais: `EVAL_MODE` (`off|sync|async`), `METACOG_BASE_URL`, `METACOG_DEFAULT_RUBRIC`.

@@ -5,7 +5,7 @@ import os
 from contextlib import asynccontextmanager
 from .db import init_db
 from .routers import agents, flows, orchestrate, evals
-from .routers import agents_io, flows_io
+from .routers import agents_io, flows_io, converters
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ def health():
 # Register IO routes before dynamic ID routes to avoid collisions like /agents/export matching /agents/{id}
 app.include_router(agents_io.router)
 app.include_router(flows_io.router)
+app.include_router(converters.router)
 app.include_router(agents.router)
 app.include_router(flows.router)
 app.include_router(orchestrate.router)
