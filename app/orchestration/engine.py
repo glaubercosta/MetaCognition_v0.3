@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class OrchestrationRequest(BaseModel):
-    engine: str = "crewai"
+    engine: Optional[str] = None
     flow_id: str
     inputs: Dict[str, Any] = Field(default_factory=dict)
 

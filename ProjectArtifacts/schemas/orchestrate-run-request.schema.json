@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "engine": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Engine"
+    },
+    "flow_id": {
+      "title": "Flow Id",
+      "type": "string"
+    },
+    "inputs": {
+      "title": "Inputs",
+      "type": "object"
+    }
+  },
+  "required": [
+    "flow_id"
+  ],
+  "title": "OrchestrationRequest",
+  "type": "object"
+}

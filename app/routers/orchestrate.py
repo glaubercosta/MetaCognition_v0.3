@@ -5,8 +5,9 @@ from ..orchestration.engines.crewai_adapter import CrewAIEngine
 from ..orchestration.engines.robotgreen_adapter import RobotGreenEngine
 from ..orchestration.engines.fake_adapter import FakeEngine
 from ..orchestration.engines.crewai_real import RealCrewAIEngine
-import os
-import uuid, json, datetime
+from ..orchestration.engines.langchain_engine import LangChainEngine
+from ..config import DEFAULT_ENGINE, CREWAI_MODE, CREWAI_API_KEY
+import uuid, json, datetime, os
 
 router = APIRouter(prefix="/orchestrate", tags=["orchestrate"])
 
@@ -15,23 +16,31 @@ def run(req: OrchestrationRequest):
     f = flows.get_flow(req.flow_id)
     if not f:
         raise HTTPException(404, "Flow not found")
-    if req.engine.lower() == "crewai":
-        crewai_mode = os.getenv("CREWAI_MODE", "stub").lower()
-        crewai_api_key = os.getenv("CREWAI_API_KEY", "")
+    engine_key = (req.engine or DEFAULT_ENGINE).lower()
+    if engine_key in ("langchain", "langgraph", "lc"):
+        try:
+            runner = LangChainEngine()
+        except RuntimeError as exc:
+            raise HTTPException(501, str(exc))
+    elif engine_key == "crewai":
+        crewai_mode = os.getenv("CREWAI_MODE", CREWAI_MODE).lower()
+        crewai_api_key = os.getenv("CREWAI_API_KEY", CREWAI_API_KEY)
         if crewai_mode == "real":
             if not crewai_api_key:
                 raise HTTPException(501, "CrewAI real adapter disabled or CREWAI_API_KEY not set")
             runner = RealCrewAIEngine()
         else:
             runner = CrewAIEngine()
-    elif req.engine.lower() == "robotgreen":
+    elif engine_key == "robotgreen":
         runner = RobotGreenEngine()
-    elif req.engine.lower() == "fake":
+    elif engine_key == "fake":
         runner = FakeEngine()
     else:
         raise HTTPException(400, "Unsupported engine")
+    engine_inputs = dict(req.inputs or {})
+    engine_inputs.setdefault("_flow_meta", {"id": f.id, "name": f.name, "description": f.description})
     try:
-        result = runner.run(f.graph_json, req.inputs)
+        result = runner.run(f.graph_json, engine_inputs)
     except ValueError as e:
         raise HTTPException(400, f"Engine error: {e}")
     except NotImplementedError as e:

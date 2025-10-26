@@ -5,7 +5,7 @@ import uuid, datetime
 class AgentCreate(BaseModel):
     name: str
     role: Optional[str] = None
-    prompt: str = ""
+    prompt: str
     input_artifacts: Optional[Dict[str, Any]] = None
     output_artifacts: Optional[Dict[str, Any]] = None
 

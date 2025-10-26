@@ -1,0 +1,54 @@
+{
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Role"
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string"
+    },
+    "input_artifacts": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Artifacts"
+    },
+    "output_artifacts": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Artifacts"
+    }
+  },
+  "required": [
+    "name",
+    "prompt"
+  ],
+  "title": "AgentCreate",
+  "type": "object"
+}

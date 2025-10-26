@@ -37,21 +37,42 @@ class CrewAIClient:
         Intentionally not implemented in this checkpoint to avoid network dependency.
         """
         ctx = context or {}
-        # Build OpenAI-like payload (messages + parameters) with model
         model = ctx.get("model") or os.getenv("CREWAI_MODEL", "crewai-large")
         system_prompt = ctx.get("system_prompt") or "You are a helpful assistant."
         parameters = ctx.get("parameters") or {}
-        messages = [
+        messages = ctx.get("messages") or [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
-        trimmed_ctx = {k: v for k, v in ctx.items() if k not in ("model", "system_prompt", "parameters")}
+        metadata = ctx.get("metadata") or {}
+        flow_meta = metadata.get("flow") if isinstance(metadata, dict) else None
+        trimmed_ctx = {
+            k: v
+            for k, v in ctx.items()
+            if k not in ("model", "system_prompt", "parameters", "messages", "metadata")
+        }
+
         payload = {
             "model": model,
             "messages": messages,
             "parameters": parameters,
-            "context": trimmed_ctx,
+            "metadata": {
+                "node": metadata.get("node") if isinstance(metadata, dict) else ctx.get("node"),
+                "flow": {
+                    "id": (flow_meta or {}).get("id"),
+                    "name": (flow_meta or {}).get("name"),
+                    "size": (flow_meta or {}).get("size"),
+                },
+                "extras": {
+                    k: v
+                    for k, v in (metadata.items() if isinstance(metadata, dict) else [])
+                    if k != "flow"
+                },
+            },
         }
+        if trimmed_ctx:
+            payload["context"] = trimmed_ctx
+
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
         last_exc: Optional[Exception] = None
@@ -64,28 +85,38 @@ class CrewAIClient:
                         raise httpx.HTTPStatusError("server error", request=resp.request, response=resp)
                     resp.raise_for_status()
                     data = resp.json()
-                    # Normalize possible response shapes into {status, output, error}
-                    # 1) { status: 'ok'|'error', output?: str, error?: str }
-                    if isinstance(data, dict) and ("status" in data or "output" in data or "error" in data):
-                        status = data.get("status", "ok")
+                    if not isinstance(data, dict):
+                        return {"status": "error", "output": None, "error": "invalid_response_shape"}
+                    status = data.get("status", "ok")
+                    if status == "ok":
                         output = data.get("output")
-                        error = data.get("error")
-                        return {"status": status, "output": output, "error": error}
-                    # 2) OpenAI-like: { choices: [ { message: { content }, text } ] }
-                    if isinstance(data, dict) and "choices" in data:
-                        try:
-                            choices = data.get("choices") or []
-                            first = choices[0] if choices else {}
-                            content = (
-                                (((first.get("message") or {}).get("content")) if isinstance(first, dict) else None)
-                                or (first.get("text") if isinstance(first, dict) else None)
-                            )
-                            return {"status": "ok", "output": content, "error": None}
-                        except Exception:
-                            return {"status": "error", "output": None, "error": "invalid_response_shape"}
-                    # 3) Unknown shape
-                    return {"status": "error", "output": None, "error": "unknown_response_shape"}
-            except Exception as e:  # httpx.RequestError | httpx.HTTPStatusError
+                        if output is None and isinstance(data.get("results"), list):
+                            first = data["results"][0] if data["results"] else {}
+                            if isinstance(first, dict):
+                                output = first.get("content") or first.get("text")
+                        if output is None and isinstance(data.get("choices"), list):
+                            first = data["choices"][0] if data["choices"] else {}
+                            if isinstance(first, dict):
+                                output = (
+                                    (first.get("message") or {}).get("content")
+                                    if isinstance(first.get("message"), dict)
+                                    else None
+                                ) or first.get("text")
+                        return {
+                            "status": "ok",
+                            "output": output,
+                            "error": None,
+                            "usage": data.get("usage"),
+                        }
+                    if status == "error":
+                        err = data.get("error")
+                        if isinstance(err, dict):
+                            message = err.get("message") or err.get("type") or "crew_error"
+                        else:
+                            message = err or "crew_error"
+                        raise ValueError(message)
+                    return {"status": status, "output": data.get("output"), "error": data.get("error")}
+            except Exception as e:
                 last_exc = e
                 if attempt < self.max_retries:
                     time.sleep(self.backoff_sec * (attempt + 1))

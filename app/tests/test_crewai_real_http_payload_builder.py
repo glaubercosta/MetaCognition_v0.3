@@ -15,6 +15,8 @@ def test_crewai_real_http_payload_contains_model_and_edges(monkeypatch):
         ctx = context or {}
         assert ctx.get("model") == os.getenv("CREWAI_MODEL")
         assert isinstance(ctx.get("edges"), list)
+        assert ctx["metadata"]["flow"]["id"] == flow_id
+        assert ctx["inputs"]["prompt"] == "P"
         return {"status": "ok", "output": f"ok-{ctx.get('node','?')}"}
 
     monkeypatch.setattr(CrewAIClient, "run_node", fake_run_node)
@@ -31,4 +33,3 @@ def test_crewai_real_http_payload_contains_model_and_edges(monkeypatch):
     flow_id = rf.json()["id"]
     rr = client.post("/orchestrate/run", json={"engine": "crewai", "flow_id": flow_id, "inputs": {"prompt": "P"}})
     assert rr.status_code == 200
-

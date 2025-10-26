@@ -1,0 +1,21 @@
+@startuml
+title Fluxo de Documentacao - MetaCognition
+
+start
+:Identificar gatilho (PR, sprint, release);
+:Abrir `doc/project_kb.md`, `doc/readme.md` e indice de ADRs;
+if (Mudanca cria ou altera decisao?) then (Sim)
+  :Redigir/ajustar ADR conforme `doc/adr-readme.md`;
+  :Atualizar indice `doc/adr/index.md` (ou equivalente);
+endif
+if (Mudanca afeta experiencia ou setup?) then (Sim)
+  :Atualizar `doc/readme.md` com comandos, variaveis e fluxos vigentes;
+endif
+if (Mudanca altera status, backlog ou escopo?) then (Sim)
+  :Registrar deltas em `doc/project_kb.md`;
+endif
+:Verificar referencias cruzadas (KB <-> README <-> ADRs);
+:Resumo final em changelog, PR ou Sprint Review;
+stop
+
+@enduml

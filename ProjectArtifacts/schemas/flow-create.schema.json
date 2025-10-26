@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "graph_json": {
+      "title": "Graph Json",
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "graph_json"
+  ],
+  "title": "FlowCreate",
+  "type": "object"
+}

@@ -1,5 +1,11 @@
 ﻿# README (extract)
 
+## Documentacao Complementar
+- Guia operacional detalhado: `doc/readme.md`
+- Base de conhecimento da sprint: `doc/project_kb.md`
+- Decisoes arquiteturais e status: `doc/adr/index.md`
+- Esquemas JSON oficiais de contratos: `ProjectArtifacts/schemas/`
+
 ## Política de Build (UI)
 
 - Em desenvolvimento, a UI é construída localmente em `frontend/` e os artefatos são copiados para `public/`.
@@ -16,16 +22,30 @@ Makefile/Comandos úteis (dev):
 
 Veja `.env.example`:
 - `APP_ENV`, `LOG_LEVEL`
-- `DEFAULT_ENGINE` (`crewai` | `robotgreen`)
+- `DEFAULT_ENGINE` (`langchain` | `robotgreen` | `fake` | `crewai`*)
 - `DATABASE_URL` (sqlite em `data/app.db` por padrão)
 
-Integração CrewAI (feature flag):
+Engine LangChain/LangGraph:
+- Variáveis específicas do provedor de LLM escolhido (`LANGCHAIN_PROVIDER`, `LANGCHAIN_MODEL`, `LANGCHAIN_API_KEY`, etc.) são mapeadas conforme o conector.
+- Provedores suportados out-of-the-box:
+  - `stub` (default) — sem dependências extras; respostas determinísticas para desenvolvimento.
+  - `openai` — instale `pip install langchain-openai`; defina `LANGCHAIN_MODEL` (ex. `gpt-4o-mini`) e `LANGCHAIN_API_KEY` (ou `OPENAI_API_KEY`).
+  - `google-gemini` — instale `pip install langchain-google-genai`; defina `LANGCHAIN_MODEL` (ex. `gemini-1.5-pro`) e `LANGCHAIN_API_KEY` (ou `GOOGLE_API_KEY`).
+  - `ollama` — instale `pip install langchain-community`; defina `LANGCHAIN_MODEL` (ex. `llama3.1`) e mantenha servidor Ollama (`LANGCHAIN_BASE_URL`, default `http://localhost:11434`).
+- Para outros provedores, estenda `app/integrations/langchain_client.py` com novo factory.
+
+Integração CrewAI (legado/opcional):
 - `CREWAI_MODE` (`stub` | `real`) — padrão: `stub`.
 - `CREWAI_API_KEY` — obrigatório apenas quando `CREWAI_MODE=real`.
-- `CREWAI_HTTP_MODE` (`dry-run` | `http`) — padrão: `dry-run`. Em `http`, o adapter usa chamadas HTTP reais do cliente.
+- `CREWAI_HTTP_MODE` (`dry-run` | `http`) - padrão: `dry-run`. Em `http`, o adapter usa chamadas HTTP reais do cliente.
 - `CREWAI_BASE_URL` (opcional; padrão: `https://api.crewai.example`).
 - `CREWAI_RUN_PATH` (opcional; caminho da API; padrão: `/v1/run`).
 - `CREWAI_MODEL` (opcional; ex.: `crewai-large`).
+- `CREWAI_TIMEOUT_SEC` (opcional; tempo de espera por chamada HTTP; padrão: `30`).
+- `CREWAI_MAX_RETRIES` (opcional; total de tentativas antes de falhar; padrão: `2`).
+- `CREWAI_BACKOFF_SEC` (opcional; incremento do intervalo entre tentativas; padrão: `0.5`).
+
+\* `crewai` permanece disponível apenas como fallback enquanto o engine LangChain/LangGraph é finalizado.
 
 Exemplos
 - PowerShell (ativar modo real dry‑run do CrewAI):
