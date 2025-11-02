@@ -18,6 +18,7 @@
 ### Comandos uteis
 - `make frontend-all` – instala dependencias, gera o build e publica em `public/`.
 - `make deploy-frontend` – apenas copia `frontend/dist` para `public/` apos o build local.
+ - `make frontend-windows` – atalho para executar o helper PowerShell (`scripts/frontend-build.ps1`) em ambientes Windows.
 
 #### Build frontend (Windows)
 Se estiver em Windows e sem `make` instalado, use o helper PowerShell que automatiza install/build/copy:
@@ -28,6 +29,24 @@ Se estiver em Windows e sem `make` instalado, use o helper PowerShell que automa
 ```
 
 Esse script vai executar `npm ci`/`npm install` quando necessário, `npm run build` em `frontend/` e copiar o conteúdo de `frontend/dist/` para `public/`.
+
+Importante (pre-start para desenvolvimento)
+- Antes de iniciar o backend localmente (por exemplo `uvicorn app.main:app --reload`) ou subir com `docker compose up` em modo de desenvolvimento, execute o helper acima para garantir que `public/` contenha os artefatos gerados pelo build do frontend.
+- Em ambientes com bind-mount (`.:/app`) o conteúdo `public/` embutido na imagem pode ser sobrescrito pelo diretório `public/` do host — se o host não tiver os assets gerados, a UI pode aparecer em branco.
+
+Comandos úteis (PowerShell, executar na raiz do projeto):
+```powershell
+# executa install/build/copy
+.\scripts\frontend-build.ps1
+
+# alternativa manual (build sem o helper)
+#Set-Location frontend; npm ci --no-audit --no-fund; npm run build; Set-Location -
+```
+
+Alternativa (Unix/macOS):
+```sh
+make frontend-all
+```
 
 ## Configuracao (.env)
 
