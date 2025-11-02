@@ -1,73 +1,67 @@
-﻿# README (extract)
+# README Rapido
 
 ## Documentacao Complementar
 - Guia operacional detalhado: `doc/readme.md`
 - Base de conhecimento da sprint: `doc/project_kb.md`
-- Decisoes arquiteturais e status: `doc/adr/index.md`
-- Esquemas JSON oficiais de contratos: `ProjectArtifacts/schemas/`
+- Decisoes arquiteturais: `doc/adr/index.md`
+- Esquemas JSON oficiais: `ProjectArtifacts/schemas/`
 
-## Política de Build (UI)
+## Politica de Build (UI)
 
-- Em desenvolvimento, a UI é construída localmente em `frontend/` e os artefatos são copiados para `public/`.
-- Artefatos de build não são versionados (pasta `public/assets/` está no `.gitignore`).
-- A API serve automaticamente `./public` quando existe `index.html` (fallback para `./ui/public`).
-- Em release, o build pode ser:
-  - incorporado na imagem Docker via multi-stage (Dockerfile já faz isso), ou
-  - publicado como artefato em uma pipeline de release (fora da branch principal).
+- Durante o desenvolvimento, o bundle React e gerado em `frontend/` e copiado para `public/`.
+- Apenas arquivos estaticos base (por exemplo `index.html`, `favicon.ico`, `robots.txt`, `placeholder.svg`) permanecem versionados.
+- A pasta `public/assets/` deve ficar vazia no git (somente `.gitkeep`). Arquivos gerados com hash nao podem ser commitados.
+- O alvo `make frontend-all` instala dependencias, executa `npm run build`, limpa `public/assets/` e copia o resultado.
+- O job `hygiene` do CI valida essa politica e tambem bloqueia commits com blobs grandes.
+- Em releases, o build continua empacotado via multi-stage no Dockerfile ou disponibilizado como artefato fora da branch principal.
 
-Makefile/Comandos úteis (dev):
-- `make frontend-all` (ou `cd frontend && npm ci && npm run build` e copiar para `public/`).
+### Comandos uteis
+- `make frontend-all` – instala dependencias, gera o build e publica em `public/`.
+- `make deploy-frontend` – apenas copia `frontend/dist` para `public/` apos o build local.
 
-## Configuração (Env)
+#### Build frontend (Windows)
+Se estiver em Windows e sem `make` instalado, use o helper PowerShell que automatiza install/build/copy:
 
-Veja `.env.example`:
+```powershell
+# executar a partir da raiz do projeto
+.\scripts\frontend-build.ps1
+```
+
+Esse script vai executar `npm ci`/`npm install` quando necessário, `npm run build` em `frontend/` e copiar o conteúdo de `frontend/dist/` para `public/`.
+
+## Configuracao (.env)
+
+Veja `.env.example` para valores base:
 - `APP_ENV`, `LOG_LEVEL`
-- `DEFAULT_ENGINE` (`langchain` | `robotgreen` | `fake` | `crewai`*)
-- `DATABASE_URL` (sqlite em `data/app.db` por padrão)
-- Limites de importação:
-  - `IMPORT_MAX_FILE_MB` — tamanho máximo (MB) aceito em uploads; `0` desabilita a verificação.
-  - `IMPORT_MAX_ITEMS` — quantidade máxima de registros por carga (`0` desabilita).
-  - `PROMPT_MAX_BYTES` — tamanho máximo (bytes) dos prompts de agentes; aplicado também em validações.
+- `DEFAULT_ENGINE` (`langchain` | `robotgreen` | `fake` | `crewai`)
+- `DATABASE_URL` (por padrao `sqlite:///data/app.db`)
+- Limites de importacao:
+  - `IMPORT_MAX_FILE_MB` – tamanho maximo (MB) aceito em uploads; `0` desabilita a verificacao.
+  - `IMPORT_MAX_ITEMS` – quantidade maxima de registros por carga; `0` desabilita.
+  - `PROMPT_MAX_BYTES` – limite em bytes para prompts de agentes; aplicado nos validadores Pydantic.
 
-Engine LangChain/LangGraph:
-- Variáveis específicas do provedor de LLM escolhido (`LANGCHAIN_PROVIDER`, `LANGCHAIN_MODEL`, `LANGCHAIN_API_KEY`, etc.) são mapeadas conforme o conector.
-- Provedores suportados out-of-the-box:
-  - `stub` (default) — sem dependências extras; respostas determinísticas para desenvolvimento.
-  - `openai` — instale `pip install langchain-openai`; defina `LANGCHAIN_MODEL` (ex. `gpt-4o-mini`) e `LANGCHAIN_API_KEY` (ou `OPENAI_API_KEY`).
-  - `google-gemini` — instale `pip install langchain-google-genai`; defina `LANGCHAIN_MODEL` (ex. `gemini-1.5-pro`) e `LANGCHAIN_API_KEY` (ou `GOOGLE_API_KEY`).
-  - `ollama` — instale `pip install langchain-community`; defina `LANGCHAIN_MODEL` (ex. `llama3.1`) e mantenha servidor Ollama (`LANGCHAIN_BASE_URL`, default `http://localhost:11434`).
-- Para outros provedores, estenda `app/integrations/langchain_client.py` com novo factory.
+### Engine LangChain/LangGraph
+- Variaveis especificas do provedor (`LANGCHAIN_PROVIDER`, `LANGCHAIN_MODEL`, `LANGCHAIN_API_KEY`, etc.) sao mapeadas conforme o conector.
+- Provedores pronto-uso:
+  - `stub` (default) – sem dependencias extras; respostas deterministicas.
+  - `openai` – instale `pip install langchain-openai`; defina `LANGCHAIN_MODEL` (ex.: `gpt-4o-mini`) e `LANGCHAIN_API_KEY` (ou `OPENAI_API_KEY`).
+  - `google-gemini` – instale `pip install langchain-google-genai`; defina `LANGCHAIN_MODEL` (ex.: `gemini-1.5-pro`) e `LANGCHAIN_API_KEY` (ou `GOOGLE_API_KEY`).
+  - `ollama` – instale `pip install langchain-community`; defina `LANGCHAIN_MODEL` (ex.: `llama3.1`) e mantenha servidor Ollama em `LANGCHAIN_BASE_URL` (default `http://localhost:11434`).
+- Para outros provedores, estenda `app/integrations/langchain_client.py`.
 
-Integração CrewAI (legado/opcional):
-- `CREWAI_MODE` (`stub` | `real`) — padrão: `stub`.
-- `CREWAI_API_KEY` — obrigatório apenas quando `CREWAI_MODE=real`.
-- `CREWAI_HTTP_MODE` (`dry-run` | `http`) - padrão: `dry-run`. Em `http`, o adapter usa chamadas HTTP reais do cliente.
-- `CREWAI_BASE_URL` (opcional; padrão: `https://api.crewai.example`).
-- `CREWAI_RUN_PATH` (opcional; caminho da API; padrão: `/v1/run`).
-- `CREWAI_MODEL` (opcional; ex.: `crewai-large`).
-- `CREWAI_TIMEOUT_SEC` (opcional; tempo de espera por chamada HTTP; padrão: `30`).
-- `CREWAI_MAX_RETRIES` (opcional; total de tentativas antes de falhar; padrão: `2`).
-- `CREWAI_BACKOFF_SEC` (opcional; incremento do intervalo entre tentativas; padrão: `0.5`).
+### Integracao CrewAI (legado/opcional)
+- `CREWAI_MODE` (`stub` | `real`) – default `stub`.
+- `CREWAI_HTTP_MODE` (`dry-run` | `http`) – default `dry-run`; em `http` ocorrem chamadas reais.
+- `CREWAI_API_KEY`, `CREWAI_BASE_URL`, `CREWAI_RUN_PATH`, `CREWAI_MODEL`, `CREWAI_TIMEOUT_SEC`, `CREWAI_MAX_RETRIES`, `CREWAI_BACKOFF_SEC` – configuracoes opcionais utilizadas apenas quando `CREWAI_MODE=real`.
 
-\* `crewai` permanece disponível apenas como fallback enquanto o engine LangChain/LangGraph é finalizado.
-
-Exemplos
-- PowerShell (ativar modo real dry‑run do CrewAI):
+### Exemplos rapidos
+- PowerShell (ativar CrewAI dry-run):
   ```powershell
   $env:CREWAI_MODE = 'real'
   $env:CREWAI_API_KEY = 'minha-chave'
   uvicorn app.main:app --reload --port 8000
   ```
-- PowerShell (ativar modo real com HTTP real, requer backend disponível):
-  ```powershell
-  $env:CREWAI_MODE = 'real'
-  $env:CREWAI_API_KEY = 'minha-chave'
-  $env:CREWAI_HTTP_MODE = 'http'
-  $env:CREWAI_BASE_URL = 'https://api.seu-crewai'
-  $env:CREWAI_RUN_PATH = '/v1/run'
-  uvicorn app.main:app --reload --port 8000
-  ```
-- Docker Compose (adicionar ao serviço `orchestrator`):
+- Docker Compose:
   ```yaml
   services:
     orchestrator:
