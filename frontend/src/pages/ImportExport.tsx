@@ -40,6 +40,7 @@ type SupportedFormat = "json" | "yaml";
 
 interface ValidationState {
   errors: string[];
+  message?: string;
   lastCheckedAt?: number;
 }
 
@@ -114,7 +115,7 @@ export default function ImportExport() {
       throw new Error("Provide agent data before validating.");
     }
     const result = await validateAgentPayload(agentsData, format);
-    setAgentValidation({ errors: result.errors, lastCheckedAt: Date.now() });
+    setAgentValidation({ errors: result.errors, message: result.message, lastCheckedAt: Date.now() });
     return result.ok;
   };
 
@@ -123,7 +124,7 @@ export default function ImportExport() {
       throw new Error("Provide flow data before validating.");
     }
     const result = await validateFlowPayload(flowsData, format);
-    setFlowValidation({ errors: result.errors, lastCheckedAt: Date.now() });
+    setFlowValidation({ errors: result.errors, message: result.message, lastCheckedAt: Date.now() });
     return result.ok;
   };
 

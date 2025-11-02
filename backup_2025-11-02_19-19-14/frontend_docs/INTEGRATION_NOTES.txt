@@ -1,0 +1,9 @@
+This folder will contain the built frontend assets.
+
+Build steps:
+1. cd frontend
+2. npm install
+3. npm run build
+4. Copy build to public: (PowerShell) Copy-Item -Path "dist/*" -Destination "..\public\" -Recurse -Force
+
+FastAPI will automatically serve ./public if index.html exists, otherwise it falls back to ./ui/public.

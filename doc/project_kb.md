@@ -16,6 +16,7 @@ MetaCognition entrega um orquestrador de agentes e fluxos com pipeline TDD, impo
 - UI React (Vite) publicada estaticamente via `GET /`.
 - Limites configuraveis (`IMPORT_MAX_FILE_MB`, `IMPORT_MAX_ITEMS`, `PROMPT_MAX_BYTES`) aplicados via `app/config.py` e utilizados nos validadores.
 - Tela de Import/Export atualizada com validacao inline, upload JSON/YAML e conversao Markdown -> JSON.
+- Politica de build aplicada: `public/` versiona apenas arquivos base e `public/assets/` permanece vazio (CI monitora via job de higiene).
 - Adapters stubs para engines `crewai`, `robotgreen` e `fake`, cobertos por testes.
 - Endpoint `/orchestrate/run` aciona adapters existentes e gera artefatos padrao.
 - Stub `/evaluations` interno com SQLite garante compatibilidade temporaria enquanto o metacog nao entra em operacao.

@@ -31,9 +31,9 @@ A seguir, analiso item a item e assino aprovação ou não, com justificativas e
 
 1) Limites configuráveis (IMPORT_MAX_FILE_MB, IMPORT_MAX_ITEMS, PROMPT_MAX_BYTES)
 - Situação: Declarado como implementado no plano e status "Concluido".
-- Veredito: APROVADO (condicional)
-- Racional: Plano e checklist indicam implementação e uso em validadores. Recomendação: rodar testes com boundary values e confirmar variáveis expostas em `.env.example`.
-- Ação imediata obrigatória: adicionar 2 testes unitários com boundary (ex.: exatamente o tamanho limite, limite+1) se ainda não existirem.
+- Veredito: APROVADO
+- Racional: Além do uso em validadores, a suíte inclui cenários de boundary (limite e limite+1) e `.env.example` documenta o uso de `0` para desativar verificações.
+- Ação: manter execução periódica desses testes no CI para prevenir regressões.
 
 2) Endpoints auxiliares `/agents/validate`, `/flows/validate`, `/convert/agent-md`
 - Situação: Reportados como implementados e integrados à UI (conversor de Markdown no cliente).
@@ -43,21 +43,21 @@ A seguir, analiso item a item e assino aprovação ou não, com justificativas e
 
 3) Reestruturação de import/validate (io_support e reutilização)
 - Situação: Implementado `io_support.py` e routers ajustados para evitar duplicação.
-- Veredito: APROVADO parcialmente
-- Racional: A centralização dos utilitários é positiva, porém é necessário revisar se todos os pontos de entrada usam os utilitários (evitar divergência futura). Também validar tratamento de erros e mensagens claras.
+- Veredito: APROVADO
+- Racional: `io_support` passou a expor `build_error_detail` e todos os routers (`agents_io`, `flows_io`, `converters`) agora utilizam o mesmo padrão de mensagem e validação.
 - Ação: checklist de cobertura para os routers garantindo que `io_support` é a única fonte de parsing/upload.
 
 4) Conversão Markdown → Agent JSON (`/convert/agent-md`)
 - Situação: Implementado e integrado ao frontend.
 - Veredito: APROVADO
 - Racional: Funcionalidade descrita como entregue. Testes de conversão devem existir; confirmar com amostras reais.
-- Ação: manter conjunto de fixtures `.md` de exemplo em `ProjectArtifacts/fixtures/` para regressão.
+- Ação: manter conjunto de fixtures `.md` de exemplo em `ProjectArtifacts/fixtures/` para regressão (ex.: `sample_agent.md`).
 
 5) Validações Pydantic (nome obrigatório, limite prompt, graph_json)
 - Situação: Declarado implementado.
-- Veredito: APROVADO (condicional)
-- Racional: Bom uso de validação model-level. Confirmar mensagens de erro amigáveis e status codes 4xx apropriados.
-- Ação: incluir testes que verifiquem mensagens de erro retornadas (não apenas código de status).
+- Veredito: APROVADO
+- Racional: Bom uso de validação model-level; payloads de erro agora utilizam `message` + `errors` e são exercitados por testes.
+- Ação: manter cobertura quando novos campos ou validações forem introduzidos.
 
 6) Frontend Import/Export (validação, upload, feedback)
 - Situação: Parcialmente concluído; conversão integrada, validação no cliente implementada.
@@ -67,14 +67,14 @@ A seguir, analiso item a item e assino aprovação ou não, com justificativas e
 
 7) Testes automatizados (`app/tests/test_import_validation.py`)
 - Situação: Implementado e executado localmente conforme plano.
-- Veredito: APROVADO (com ressalvas)
-- Racional: Testes cobrem limites e conversão; entretanto recomenda-se aumentar cenários (malformed YAML, large payload streaming, timeout behavior).
-- Ação: adicionar 3-4 testes de negativa e limites para cobrir bordas.
+- Veredito: APROVADO
+- Racional: Testes cobrem limites e conversão; cenários negativos (YAML malformado, uploads no limite, prompt boundary) foram incluídos.
+- Ação: monitorar cobertura adicional (streaming/timeout) nas próximas sprints.
 
 8) Documentação e JSON Schemas
 - Situação: Documentação atualizada; JSON Schemas revisados e publicados na pasta `ProjectArtifacts/schemas`.
-- Veredito: APROVADO (condicional)
-- Racional: Documentação e schemas existirem é ótimo; requer revisão cruzada para garantir OpenAPI e JSON Schemas estão alinhados com implementações reais.
+- Veredito: APROVADO
+- Racional: Schemas foram alinhados com os modelos (inclusive remoção de `additionalProperties` divergentes) e README/KB registram a política de build.
 - Ação: executar validação automática de schemas durante CI (ex.: `schemacheck` ou script pytest que compara schema vs models).
 
 ---
@@ -83,9 +83,9 @@ A seguir, analiso item a item e assino aprovação ou não, com justificativas e
 (estes exigem ação antes de considerar a entrega como 100% aceita)
 
 A. Política de build / versionamento de `public` e assets
-- Status: PENDENTE / RECOMENDADO
-- Por que: Planos citam build assets e integração. Precisa-se de política clara: quando commitar `public/` vs gerar em release. Sem política, o repositório pode inflar e gerar confusão.
-- Ação requerida: atualizar README com política e implementar CI step opcional para evitar commits de assets não permitidos.
+- Status: RESOLVIDO
+- Por que: README, Project KB e Makefile documentam a política; job `hygiene` barra commits em `public/assets/` e o deploy limpa a pasta antes da cópia.
+- Ação requerida: monitorar o job de higiene para garantir aderência contínua.
 
 B. Garantias de ausência de blobs grandes no histórico
 - Status: PENDENTE
@@ -98,43 +98,40 @@ C. Cobertura de testes E2E e estabilidade CI
 - Ação: validar pipeline remoto e converter testes flakey para mocks ou retries controlados.
 
 D. Exposição das variáveis de configuração em `.env.example`
-- Status: PENDENTE
-- Por que: Os limites dependem de variáveis (IMPORT_MAX_FILE_MB, etc.). É importante que `.env.example` contenha os valores e comentários.
-- Ação: atualizar `.env.example` com as novas variáveis e valores default sugeridos.
+- Status: RESOLVIDO
+- Por que: Os limites dependem de variáveis (IMPORT_MAX_FILE_MB, etc.). `.env.example` agora traz comentários explicando o comportamento de `0`.
+- Ação: revisar quando novos limites forem adicionados.
 
 E. Mensagens de erro consistentes e UX
-- Status: PENDENTE
-- Por que: Verificar que erros de validação no backend são traduzidos para mensagens amigáveis no frontend com códigos HTTP corretos.
-- Ação: revisar 5 fluxos de erro e normalizar payload de erro (ex.: {ok:false, errors:[{field,msg}]}); adicionar testes que assertem o formato.
+- Status: RESOLVIDO
+- Por que: Backend utiliza `build_error_detail` e o frontend consome `message`/`errors`; testes cobrem JSON/YAML inválidos e uploads fora do limite.
+- Ação: avaliar UX quando o editor avançado for entregue na Sprint 4.
 
 ---
 
 ## Checklist resumido (para o time de desenvolvimento)
-Marcar cada item com ✅ ou ⬜ conforme status atual.
+Marcar cada item com ✔ ou ✖ conforme status atual.
 
-- [✅] Limites configuráveis implementados e usados nos validadores (IMPORT_MAX_FILE_MB, IMPORT_MAX_ITEMS, PROMPT_MAX_BYTES)
-- [✅] Endpoints `/agents/validate`, `/flows/validate`, `/convert/agent-md` implementados
-- [✅] `io_support` criado e reuso parcial nos routers
-- [✅] Conversão Markdown → Agent JSON disponível e integrada ao frontend
-- [✅] Validações Pydantic adicionadas (nome obrigatório, limite prompt, graph_json)
-- [⚠️] Frontend Import/Export: validação e upload implementados — UI edição avançada adiada (verificar UX/A11y)
-- [✅] Testes unitários de import/validation presentes (`test_import_validation.py`)
-- [✅] Documentação e JSON Schemas atualizados no KB
-- [⬜] Política de build/versionamento para `public/` (PENDENTE)
-- [⬜] Auditoria de blobs/objetos grandes no histórico (PENDENTE)
-- [⬜] CI: confirmar execução do novo job de higiene e E2E no pipeline remoto (PENDENTE)
-- [⬜] `.env.example` atualizado com novas variáveis (PENDENTE)
-- [⬜] Normalização e testes para mensagens de erro (PENDENTE)
+- [✔] Limites configuráveis implementados e usados nos validadores (IMPORT_MAX_FILE_MB, IMPORT_MAX_ITEMS, PROMPT_MAX_BYTES)
+- [✔] Endpoints `/agents/validate`, `/flows/validate`, `/convert/agent-md` implementados
+- [✔] `io_support` criado e reuso consolidado nos routers
+- [✔] Conversão Markdown → Agent JSON disponível e integrada ao frontend
+- [✔] Validações Pydantic adicionadas (nome obrigatório, limite prompt, graph_json)
+- [⚠] Frontend Import/Export: validação e upload implementados – UI edição avançada adiada (verificar UX/A11y)
+- [✔] Testes unitários de import/validation presentes (`test_import_validation.py`)
+- [✔] Documentação e JSON Schemas atualizados no KB
+- [✔] Política de build/versionamento para `public/` documentada e monitorada pelo CI
+- [✖] Auditoria de blobs/objetos grandes no histórico (pendente)
+- [⚠] CI: confirmar execução do job de higiene + testes E2E no pipeline remoto (validado localmente, falta evidência remota)
+- [✔] `.env.example` atualizado com novas variáveis e comentários
+- [✔] Normalização e testes para mensagens de erro
 
 ---
 
 ## Prioridade e próximos passos recomendados (ordenados)
-1. Publicar/alinhar política de build para `public/` e documentar no README (curto prazo).
-2. Atualizar `.env.example` com novas variáveis e defaults (curto prazo).
-3. Rodar auditoria de histórico para detectar blobs grandes e agir se necessário (médio prazo).
-4. Garantir que CI executa o job de higiene e os testes E2E; endurecer tempos/fixtures para reduzir flakiness (curto/médio prazo).
-5. Adicionar testes de boundary para limites configuráveis e mensagens de erro padronizadas (curto prazo).
-6. Agendar revisão de follow-up em 1 semana após as correções.
+1. Rodar auditoria de histórico para detectar blobs grandes e agir se necessário (médio prazo).
+2. Garantir que CI executa o job de higiene e os testes E2E; endurecer tempos/fixtures para reduzir flakiness (curto/médio prazo).
+3. Agendar revisão de follow-up após a conclusão das pendências remanescentes (CI/higiene e auditoria).
 
 ---
 

@@ -34,6 +34,7 @@ export interface Evaluation {
 export interface ValidationResult {
   ok: boolean;
   errors: string[];
+  message?: string;
 }
 
 export interface ImportSummary<T> {
@@ -45,6 +46,7 @@ export interface ConvertAgentMarkdownResponse {
   ok: boolean;
   agent?: Record<string, unknown>;
   errors: string[];
+  message?: string;
 }
 
 const isJsonFormat = (format: "json" | "yaml"): boolean => format === "json";
@@ -65,8 +67,19 @@ const parseErrorResponse = async (response: Response): Promise<Error> => {
   const text = await response.text();
   try {
     const payload = JSON.parse(text);
-    const detail = payload.detail || payload.message || text;
-    return new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    const detail = payload.detail ?? payload.message ?? text;
+    if (typeof detail === "string") {
+      return new Error(detail);
+    }
+    if (Array.isArray(detail)) {
+      return new Error(detail.map((item) => (item.msg ? item.msg : JSON.stringify(item))).join("; "));
+    }
+    if (detail && typeof detail === "object") {
+      const message = detail.message ?? response.statusText;
+      const errors = Array.isArray(detail.errors) && detail.errors.length > 0 ? `: ${detail.errors.join("; ")}` : "";
+      return new Error(`${message}${errors}`);
+    }
+    return new Error(JSON.stringify(detail));
   } catch {
     return new Error(text || response.statusText);
   }

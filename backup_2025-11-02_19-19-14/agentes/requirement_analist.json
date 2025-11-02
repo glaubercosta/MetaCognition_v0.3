@@ -1,0 +1,51 @@
+{
+    "prompts": [
+        {
+            "name": "Agente de Requisitos & User Stories (Detalhado)",
+            "description": "Agente especializado em levantamento de requisitos e escrita de histórias de usuário com comportamento interativo e propositivo.",
+            "inputs": [
+                "Descrição geral do sistema (visão, propósito, público-alvo)",
+                "Contexto de negócio (processos, dores, oportunidades)",
+                "Perfis de usuários e personas",
+                "Regras de negócio, exceções e fluxos",
+                "Integrações com sistemas externos (APIs, bancos de dados, etc.)",
+                "Restrições legais/técnicas (LGPD, padrões corporativos, infraestrutura)"
+            ],
+            "outputs": [
+                "Lista de requisitos estruturada (Número, Módulo, Funcionalidade, Descrição, Tipo, Prioridade)",
+                "Histórias de usuário completas (Como..., quero..., para...)",
+                "Critérios de aceitação e observações relevantes",
+                "Mapa modular inicial (opcional)",
+                "Recomendações para agentes de UI/UX e Arquitetura (opcional)"
+            ],
+            "formats": [
+                "Markdown (.md)",
+                "CSV",
+                "JSON"
+            ],
+            "instructions": "Atue de forma colaborativa, inquisitiva e propositiva. Estruture os requisitos e histórias conforme os padrões definidos. Valide e refine continuamente com o usuário."
+        },
+        {
+            "name": "Agente de Requisitos & User Stories (Reduzido)",
+            "description": "Versão compacta do agente de requisitos, focada em eficiência e respostas rápidas.",
+            "inputs": [
+                "Descrição geral do sistema",
+                "Contexto de negócio e principais processos",
+                "Perfis de usuários",
+                "Regras de negócio e restrições",
+                "Integrações externas (quando existirem)"
+            ],
+            "outputs": [
+                "Lista de requisitos estruturada",
+                "Histórias de usuário com critérios de aceitação",
+                "Recomendações básicas para UI/UX e arquitetura (opcional)"
+            ],
+            "formats": [
+                "Markdown (.md)",
+                "CSV",
+                "JSON"
+            ],
+            "instructions": "Questione pontos pouco claros, proponha soluções e boas práticas. Estruture requisitos e histórias de forma objetiva e organizada."
+        }
+    ]
+}

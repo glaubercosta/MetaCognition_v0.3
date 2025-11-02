@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "OrchestrationArtifact": {
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "error"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "OrchestrationArtifact",
+      "type": "object"
+    },
+    "OrchestrationPlan": {
+      "properties": {
+        "executed_nodes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Executed Nodes",
+          "type": "array"
+        },
+        "artifacts": {
+          "additionalProperties": {
+            "$ref": "#/$defs/OrchestrationArtifact"
+          },
+          "title": "Artifacts",
+          "type": "object"
+        },
+        "routing": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "sequential",
+          "title": "Routing"
+        }
+      },
+      "required": [
+        "executed_nodes",
+        "artifacts"
+      ],
+      "title": "OrchestrationPlan",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "engine": {
+      "title": "Engine",
+      "type": "string"
+    },
+    "flow_id": {
+      "title": "Flow Id",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/OrchestrationPlan"
+    },
+    "logs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Logs",
+      "type": "array"
+    },
+    "duration_ms": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration Ms"
+    },
+    "request_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Request Id"
+    }
+  },
+  "required": [
+    "engine",
+    "flow_id",
+    "plan",
+    "logs"
+  ],
+  "title": "OrchestrationResult",
+  "type": "object"
+}

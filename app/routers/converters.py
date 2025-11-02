@@ -8,7 +8,7 @@ import yaml
 from pydantic import ValidationError
 
 from ..models import AgentCreate
-from .io_support import validation_errors_to_messages
+from .io_support import validation_errors_to_messages, build_error_detail
 
 
 router = APIRouter(prefix="/convert", tags=["convert"])
@@ -21,7 +21,7 @@ def _extract_front_matter(markdown: str) -> tuple[Dict[str, Any], str]:
     if not match:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Markdown payload must start with a YAML front matter block."},
+            detail=build_error_detail("Markdown payload must start with a YAML front matter block."),
         )
     front_matter_raw, body = match.groups()
     try:
@@ -29,12 +29,12 @@ def _extract_front_matter(markdown: str) -> tuple[Dict[str, Any], str]:
     except yaml.YAMLError as exc:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Invalid YAML front matter.", "errors": [str(exc)]},
+            detail=build_error_detail("Invalid YAML front matter.", errors=[str(exc)]),
         ) from exc
     if not isinstance(data, dict):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Front matter must define a mapping."},
+            detail=build_error_detail("Front matter must define a mapping."),
         )
     return data, body.strip()
 
@@ -44,7 +44,7 @@ def convert_agent_markdown(markdown: str = Body(..., media_type="text/markdown")
     if not isinstance(markdown, str) or not markdown.strip():
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Markdown payload must be a non-empty string."},
+            detail=build_error_detail("Markdown payload must be a non-empty string."),
         )
 
     meta, body = _extract_front_matter(markdown)
@@ -60,6 +60,10 @@ def convert_agent_markdown(markdown: str = Body(..., media_type="text/markdown")
 
     try:
         agent = AgentCreate(**agent_payload)
-        return {"ok": True, "agent": agent.model_dump(), "errors": []}
+        return {"ok": True, "agent": agent.model_dump(), "errors": [], "message": "Conversion succeeded."}
     except ValidationError as exc:
-        return {"ok": False, "errors": validation_errors_to_messages(exc.errors())}
+        return {
+            "ok": False,
+            "errors": validation_errors_to_messages(exc.errors()),
+            "message": "Conversion failed.",
+        }

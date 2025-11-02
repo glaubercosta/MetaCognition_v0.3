@@ -8,6 +8,12 @@ import yaml
 from ..config import import_max_file_bytes, import_max_items
 
 
+def build_error_detail(message: str, *, errors: List[str] | None = None, **extra: Any) -> Dict[str, Any]:
+    detail: Dict[str, Any] = {"ok": False, "message": message, "errors": errors or []}
+    detail.update(extra)
+    return detail
+
+
 def _load_serialized(text: str, fmt: str) -> Any:
     fmt_lower = (fmt or "json").lower()
     try:
@@ -18,11 +24,11 @@ def _load_serialized(text: str, fmt: str) -> Any:
     except (yaml.YAMLError, json.JSONDecodeError) as exc:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"Invalid {fmt_lower} payload.", "errors": [str(exc)]},
+            detail=build_error_detail(f"Invalid {fmt_lower} payload.", errors=[str(exc)]),
         ) from exc
     raise HTTPException(
         status.HTTP_400_BAD_REQUEST,
-        detail={"message": f"Unsupported format '{fmt}'."},
+        detail=build_error_detail(f"Unsupported format '{fmt}'."),
     )
 
 
@@ -40,17 +46,17 @@ def read_payload_source(
         if max_bytes > 0 and len(raw) > max_bytes:
             raise HTTPException(
                 status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail={
-                    "message": "Uploaded file exceeds the configured limit.",
-                    "limit_bytes": max_bytes,
-                },
+                detail=build_error_detail(
+                    "Uploaded file exceeds the configured limit.",
+                    limit_bytes=max_bytes,
+                ),
             )
         try:
             text = raw.decode("utf-8")
         except UnicodeDecodeError as exc:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail={"message": "Uploaded file must be UTF-8 encoded."},
+                detail=build_error_detail("Uploaded file must be UTF-8 encoded."),
             ) from exc
         use_fmt = file_format or body_format or "json"
         return _load_serialized(text, use_fmt)
@@ -63,7 +69,7 @@ def read_payload_source(
             return _load_serialized(payload, "json")
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"Unsupported format '{body_format}'."},
+            detail=build_error_detail(f"Unsupported format '{body_format}'."),
         )
 
     return payload
@@ -74,7 +80,7 @@ def normalize_items(data: Any, *, context: str) -> List[Dict[str, Any]]:
     if data is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"{context} import payload is empty."},
+            detail=build_error_detail(f"{context} import payload is empty."),
         )
 
     if isinstance(data, dict):
@@ -86,7 +92,7 @@ def normalize_items(data: Any, *, context: str) -> List[Dict[str, Any]]:
     else:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"{context} import payload must be a list or object."},
+            detail=build_error_detail(f"{context} import payload must be a list or object."),
         )
 
     normalized: List[Dict[str, Any]] = []
@@ -94,10 +100,10 @@ def normalize_items(data: Any, *, context: str) -> List[Dict[str, Any]]:
         if not isinstance(item, dict):
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": f"Invalid {context} entry.",
-                    "errors": [f"Item at index {idx} must be an object."],
-                },
+                detail=build_error_detail(
+                    f"Invalid {context} entry.",
+                    errors=[f"Item at index {idx} must be an object."],
+                ),
             )
         normalized.append(item)
 
@@ -105,11 +111,11 @@ def normalize_items(data: Any, *, context: str) -> List[Dict[str, Any]]:
     if limit > 0 and len(normalized) > limit:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": f"{context.title()} import exceeds the limit of {limit} items.",
-                "count": len(normalized),
-                "limit": limit,
-            },
+            detail=build_error_detail(
+                f"{context.title()} import exceeds the limit of {limit} items.",
+                count=len(normalized),
+                limit=limit,
+            ),
         )
 
     return normalized
@@ -120,7 +126,7 @@ def normalize_single(data: Any, *, context: str) -> Dict[str, Any]:
     if data is None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"{context} payload is empty."},
+            detail=build_error_detail(f"{context} payload is empty."),
         )
 
     if isinstance(data, dict):
@@ -133,25 +139,23 @@ def normalize_single(data: Any, *, context: str) -> Dict[str, Any]:
         if len(data) != 1:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": f"{context.title()} payload must contain exactly one item.",
-                    "count": len(data),
-                },
+                detail=build_error_detail(
+                    f"{context.title()} payload must contain exactly one item.",
+                    count=len(data),
+                ),
             )
         candidate = data[0]
         if not isinstance(candidate, dict):
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": f"{context.title()} payload must be an object.",
-                },
+                detail=build_error_detail(f"{context.title()} payload must be an object."),
             )
         return candidate
 
     if not isinstance(data, dict):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": f"{context} payload must be an object."},
+            detail=build_error_detail(f"{context} payload must be an object."),
         )
     return data
 

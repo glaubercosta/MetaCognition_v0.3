@@ -10,6 +10,7 @@ from .io_support import (
     normalize_items,
     normalize_single,
     validation_errors_to_messages,
+    build_error_detail,
 )
 
 router = APIRouter(prefix="/agents", tags=["agents-io"])
@@ -33,7 +34,7 @@ async def _ensure_payload_from_request(request: Request, payload: Any, file: Upl
         except Exception as exc:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                detail={"message": "Invalid JSON payload.", "errors": [str(exc)]},
+                detail=build_error_detail("Invalid JSON payload.", errors=[str(exc)]),
             ) from exc
 
     body = await request.body()
@@ -44,7 +45,7 @@ async def _ensure_payload_from_request(request: Request, payload: Any, file: Upl
     except UnicodeDecodeError as exc:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail={"message": "Request body must be UTF-8 encoded."},
+            detail=build_error_detail("Request body must be UTF-8 encoded."),
         ) from exc
 
 
@@ -64,11 +65,11 @@ def _parse_agents_payload(
             errors = validation_errors_to_messages(exc.errors())
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={
-                    "message": f"Agent at index {idx} failed validation.",
-                    "errors": errors,
-                    "index": idx,
-                },
+                detail=build_error_detail(
+                    f"Agent at index {idx} failed validation.",
+                    errors=errors,
+                    index=idx,
+                ),
             ) from exc
     return validated
 
@@ -93,6 +94,10 @@ def validate_agent_payload(payload: Any = Body(None), format: str = "json"):
     data = normalize_single(raw, context="agent")
     try:
         AgentCreate(**data)
-        return {"ok": True, "errors": []}
+        return {"ok": True, "errors": [], "message": "Validation passed."}
     except ValidationError as exc:
-        return {"ok": False, "errors": validation_errors_to_messages(exc.errors())}
+        return {
+            "ok": False,
+            "errors": validation_errors_to_messages(exc.errors()),
+            "message": "Validation failed.",
+        }

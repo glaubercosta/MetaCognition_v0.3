@@ -31,10 +31,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          banned=$(git ls-files | grep -E "(__pycache__|\.pyc$|^public/assets/|^frontend/(dist|node_modules)/)" || true)
+          banned=$(git ls-files | grep -E "(__pycache__|\.pyc$|^frontend/(dist|node_modules)/)" || true)
           if [[ -n "$banned" ]]; then
             echo "Banned tracked files detected:" >&2
             echo "$banned" >&2
+            exit 1
+          fi
+          assets=$(git ls-files public/assets 2>/dev/null | grep -v '^public/assets/.gitkeep$' || true)
+          if [[ -n "$assets" ]]; then
+            echo "Unexpected build artifact(s) under public/assets:" >&2
+            echo "$assets" >&2
             exit 1
           fi
       - name: Check large tracked files (>5MB), allowlist ProjectArtifacts/**
