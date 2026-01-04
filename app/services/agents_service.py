@@ -10,8 +10,8 @@ def create_agent(data: AgentCreate) -> Agent:
     a = Agent(**data.model_dump())
     conn = get_conn(); cur = conn.cursor()
     cur.execute(
-        "INSERT INTO agents (id,name,role,prompt,input_artifacts,output_artifacts,created_at) VALUES (?,?,?,?,?,?,?)",
-        (a.id, a.name, a.role, a.prompt, _dumps(a.input_artifacts), _dumps(a.output_artifacts), a.created_at)
+        "INSERT INTO agents (id,name,role,goal,backstory,tools,input_artifacts,output_artifacts,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+        (a.id, a.name, a.role, a.goal, a.backstory, _dumps(a.tools), _dumps(a.input_artifacts), _dumps(a.output_artifacts), a.created_at)
     )
     conn.commit(); conn.close()
     return a
@@ -23,9 +23,9 @@ def list_agents() -> List[Agent]:
     out = []
     for r in rows:
         out.append(Agent(
-            id=r["id"], name=r["name"], role=r["role"], prompt=r["prompt"],
-            input_artifacts=_loads(r["input_artifacts"]), output_artifacts=_loads(r["output_artifacts"]),
-            created_at=r["created_at"]
+            id=r["id"], name=r["name"], role=r["role"], goal=r["goal"], backstory=r["backstory"],
+            tools=_loads(r["tools"]), input_artifacts=_loads(r["input_artifacts"]), 
+            output_artifacts=_loads(r["output_artifacts"]), created_at=r["created_at"]
         ))
     return out
 
@@ -35,9 +35,9 @@ def get_agent(agent_id: str) -> Optional[Agent]:
     r = cur.fetchone(); conn.close()
     if not r: return None
     return Agent(
-        id=r["id"], name=r["name"], role=r["role"], prompt=r["prompt"],
-        input_artifacts=_loads(r["input_artifacts"]), output_artifacts=_loads(r["output_artifacts"]),
-        created_at=r["created_at"]
+        id=r["id"], name=r["name"], role=r["role"], goal=r["goal"], backstory=r["backstory"],
+        tools=_loads(r["tools"]), input_artifacts=_loads(r["input_artifacts"]),
+        output_artifacts=_loads(r["output_artifacts"]), created_at=r["created_at"]
     )
 
 def update_agent(agent_id: str, data: Dict[str, Any]) -> Optional[Agent]:
@@ -46,9 +46,9 @@ def update_agent(agent_id: str, data: Dict[str, Any]) -> Optional[Agent]:
     payload = a.model_dump(); payload.update(data)
     conn = get_conn(); cur = conn.cursor()
     cur.execute(
-        "UPDATE agents SET name=?, role=?, prompt=?, input_artifacts=?, output_artifacts=? WHERE id=?",
-        (payload["name"], payload.get("role"), payload.get("prompt",""),
-         _dumps(payload.get("input_artifacts")), _dumps(payload.get("output_artifacts")), agent_id)
+        "UPDATE agents SET name=?, role=?, goal=?, backstory=?, tools=?, input_artifacts=?, output_artifacts=? WHERE id=?",
+        (payload["name"], payload.get("role",""), payload.get("goal",""), payload.get("backstory",""),
+         _dumps(payload.get("tools")), _dumps(payload.get("input_artifacts")), _dumps(payload.get("output_artifacts")), agent_id)
     )
     conn.commit(); conn.close()
     return get_agent(agent_id)

@@ -36,3 +36,44 @@ def get_flow(flow_id: str) -> Optional[Flow]:
         graph_json=json.loads(r["graph_json"]) if r["graph_json"] else {},
         created_at=r["created_at"]
     )
+
+def update_flow(flow_id: str, payload: dict) -> Optional[Flow]:
+    conn = get_conn(); cur = conn.cursor()
+    
+    # First check if exists
+    cur.execute("SELECT * FROM flows WHERE id=?", (flow_id,))
+    if not cur.fetchone():
+        conn.close()
+        return None
+        
+    # Update fields
+    update_fields = []
+    params = []
+    
+    if "name" in payload:
+        update_fields.append("name=?")
+        params.append(payload["name"])
+    if "description" in payload:
+        update_fields.append("description=?")
+        params.append(payload["description"])
+    if "graph_json" in payload:
+        update_fields.append("graph_json=?")
+        params.append(json.dumps(payload["graph_json"]))
+        
+    if not update_fields:
+        conn.close()
+        return get_flow(flow_id)
+        
+    params.append(flow_id)
+    query = f"UPDATE flows SET {','.join(update_fields)} WHERE id=?"
+    cur.execute(query, tuple(params))
+    conn.commit(); conn.close()
+    
+    return get_flow(flow_id)
+
+def delete_flow(flow_id: str) -> bool:
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("DELETE FROM flows WHERE id=?", (flow_id,))
+    rows = cur.rowcount
+    conn.commit(); conn.close()
+    return rows > 0

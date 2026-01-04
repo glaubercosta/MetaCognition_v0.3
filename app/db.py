@@ -16,8 +16,10 @@ def init_db():
     CREATE TABLE IF NOT EXISTS agents (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        role TEXT,
-        prompt TEXT,
+        role TEXT NOT NULL,
+        goal TEXT NOT NULL,
+        backstory TEXT NOT NULL,
+        tools TEXT,
         input_artifacts TEXT,
         output_artifacts TEXT,
         created_at TEXT

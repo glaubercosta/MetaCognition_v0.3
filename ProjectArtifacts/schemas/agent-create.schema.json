@@ -20,31 +20,33 @@
       "title": "Prompt",
       "type": "string"
     },
-        "input_artifacts": {
-            "anyOf": [
-                {
-                    "type": "object"
-                },
-                {
-                    "type": "null"
-                }
-            ],
-            "default": null,
-            "title": "Input Artifacts"
+    "input_artifacts": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
         },
-        "output_artifacts": {
-            "anyOf": [
-                {
-                    "type": "object"
-                },
-                {
-                    "type": "null"
-                }
-            ],
-            "default": null,
-            "title": "Output Artifacts"
+        {
+          "type": "null"
         }
+      ],
+      "default": null,
+      "title": "Input Artifacts"
     },
+    "output_artifacts": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Artifacts"
+    }
+  },
   "required": [
     "name",
     "prompt"

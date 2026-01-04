@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { AgentCard } from "@/components/AgentCard";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,8 @@ export default function Agents() {
     goal: "",
     backstory: "",
     tools: "",
+    input_artifacts: "",
+    output_artifacts: "",
   });
 
   const { data: agents, isLoading } = useQuery({
@@ -85,15 +88,43 @@ export default function Agents() {
   });
 
   const resetForm = () => {
-    setFormData({ name: "", role: "", goal: "", backstory: "", tools: "" });
+    setFormData({ name: "", role: "", goal: "", backstory: "", tools: "", input_artifacts: "", output_artifacts: "" });
     setEditingAgent(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Parse JSON fields
+    let inputArtifacts = null;
+    let outputArtifacts = null;
+
+    try {
+      if (formData.input_artifacts.trim()) {
+        inputArtifacts = JSON.parse(formData.input_artifacts);
+      }
+    } catch (e) {
+      toast({ title: "Invalid Input Artifacts JSON", variant: "destructive" });
+      return;
+    }
+
+    try {
+      if (formData.output_artifacts.trim()) {
+        outputArtifacts = JSON.parse(formData.output_artifacts);
+      }
+    } catch (e) {
+      toast({ title: "Invalid Output Artifacts JSON", variant: "destructive" });
+      return;
+    }
+
     const agentData = {
-      ...formData,
+      name: formData.name,
+      role: formData.role,
+      goal: formData.goal,
+      backstory: formData.backstory,
       tools: formData.tools ? formData.tools.split(",").map((t) => t.trim()) : [],
+      input_artifacts: inputArtifacts,
+      output_artifacts: outputArtifacts,
     };
 
     if (editingAgent) {
@@ -111,6 +142,8 @@ export default function Agents() {
       goal: agent.goal,
       backstory: agent.backstory,
       tools: agent.tools?.join(", ") || "",
+      input_artifacts: agent.input_artifacts ? JSON.stringify(agent.input_artifacts, null, 2) : "",
+      output_artifacts: agent.output_artifacts ? JSON.stringify(agent.output_artifacts, null, 2) : "",
     });
     setOpen(true);
   };
@@ -137,69 +170,89 @@ export default function Agents() {
                 Create Agent
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingAgent ? "Edit Agent" : "Create New Agent"}</DialogTitle>
-              <DialogDescription>
-                Configure your AI agent with role, goals, and capabilities
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingAgent ? "Edit Agent" : "Create New Agent"}</DialogTitle>
+                <DialogDescription>
+                  Configure your AI agent with role, goals, and capabilities
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Input
+                      id="role"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="goal">Goal</Label>
+                    <MarkdownEditor
+                      value={formData.goal}
+                      onChange={(val) => setFormData({ ...formData, goal: val })}
+                      placeholder="Define the agent's primary objective..."
+                      minHeight="min-h-[100px]"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="backstory">Backstory</Label>
+                    <MarkdownEditor
+                      value={formData.backstory}
+                      onChange={(val) => setFormData({ ...formData, backstory: val })}
+                      placeholder="Describe the agent's background and personality..."
+                      minHeight="min-h-[150px]"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="tools">Tools (comma separated)</Label>
+                    <Input
+                      id="tools"
+                      value={formData.tools}
+                      onChange={(e) => setFormData({ ...formData, tools: e.target.value })}
+                      placeholder="tool1, tool2, tool3"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="input_artifacts">Input Artifacts (JSON - Optional)</Label>
+                    <Textarea
+                      id="input_artifacts"
+                      value={formData.input_artifacts || ""}
+                      onChange={(e) => setFormData({ ...formData, input_artifacts: e.target.value })}
+                      placeholder='{"key": "value"}'
+                      className="font-mono text-sm min-h-[80px]"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="output_artifacts">Output Artifacts (JSON - Optional)</Label>
+                    <Textarea
+                      id="output_artifacts"
+                      value={formData.output_artifacts || ""}
+                      onChange={(e) => setFormData({ ...formData, output_artifacts: e.target.value })}
+                      placeholder='{"key": "value"}'
+                      className="font-mono text-sm min-h-[80px]"
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Input
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="goal">Goal</Label>
-                  <Textarea
-                    id="goal"
-                    value={formData.goal}
-                    onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="backstory">Backstory</Label>
-                  <Textarea
-                    id="backstory"
-                    value={formData.backstory}
-                    onChange={(e) => setFormData({ ...formData, backstory: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="tools">Tools (comma separated)</Label>
-                  <Input
-                    id="tools"
-                    value={formData.tools}
-                    onChange={(e) => setFormData({ ...formData, tools: e.target.value })}
-                    placeholder="tool1, tool2, tool3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingAgent ? "Update Agent" : "Create Agent"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {editingAgent ? "Update Agent" : "Create Agent"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         }
       />
 

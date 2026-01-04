@@ -2,6 +2,8 @@ import os
 from functools import lru_cache
 
 
+
+APP_ENV = os.getenv("APP_ENV", "dev").lower()
 CREWAI_MODE = os.getenv("CREWAI_MODE", "stub").lower()  # stub | real
 CREWAI_API_KEY = os.getenv("CREWAI_API_KEY", "")
 

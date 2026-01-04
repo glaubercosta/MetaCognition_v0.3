@@ -48,6 +48,17 @@ Alternativa (Unix/macOS):
 make frontend-all
 ```
 
+## Segurança e Observabilidade (Sprint 4)
+
+### Segurança
+- **Rate Limiting**: Proteção contra abuso via `slowapi`. Limite padrão: 100 req/min.
+- **Sanitização**: Inputs de Agentes (role/prompt) são sanitizados para remover HTML malicioso.
+- **CORS**: Restrito em produção (`APP_ENV=prod`) via `ALLOWED_ORIGINS`.
+
+### Observabilidade
+- **Logs Estruturados**: Logs em formato JSON com timestamp e nível.
+- **Request ID**: Header `X-Request-ID` (UUID) incluído em todas as respostas e logs.
+
 ## Configuracao (.env)
 
 Veja `.env.example` para valores base:

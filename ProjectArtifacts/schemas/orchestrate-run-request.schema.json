@@ -16,10 +16,11 @@
       "title": "Flow Id",
       "type": "string"
     },
-        "inputs": {
-            "title": "Inputs",
-            "type": "object"
-        }
+    "inputs": {
+      "additionalProperties": true,
+      "title": "Inputs",
+      "type": "object"
+    }
   },
   "required": [
     "flow_id"

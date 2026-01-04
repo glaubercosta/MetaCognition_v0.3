@@ -1,16 +1,27 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, field_validator
 import uuid, datetime
 
 from .config import prompt_max_bytes
 
 
+import bleach
+
 class AgentCreate(BaseModel):
     name: str
-    role: Optional[str] = None
-    prompt: str
+    role: str
+    goal: str
+    backstory: str
+    tools: Optional[List[str]] = None
     input_artifacts: Optional[Dict[str, Any]] = None
     output_artifacts: Optional[Dict[str, Any]] = None
+
+    @field_validator("role", "goal", "backstory")
+    @classmethod
+    def _sanitize_html(cls, value: Optional[str]) -> Optional[str]:
+        if value:
+            return bleach.clean(value, tags=[], strip=True)
+        return value
 
     @field_validator("name")
     @classmethod
@@ -19,14 +30,14 @@ class AgentCreate(BaseModel):
             raise ValueError("name must be a non-empty string.")
         return value.strip()
 
-    @field_validator("prompt")
+    @field_validator("goal", "backstory")
     @classmethod
-    def _validate_prompt(cls, value: str) -> str:
+    def _validate_text_length(cls, value: str) -> str:
         if not isinstance(value, str):
-            raise ValueError("prompt must be a string.")
+            raise ValueError("field must be a string.")
         limit = prompt_max_bytes()
         if limit > 0 and len(value.encode("utf-8")) > limit:
-            raise ValueError(f"prompt exceeds the limit of {limit} bytes.")
+            raise ValueError(f"field exceeds the limit of {limit} bytes.")
         return value
 
 class Agent(AgentCreate):

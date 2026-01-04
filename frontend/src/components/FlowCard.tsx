@@ -1,16 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GitBranch } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GitBranch, Pencil, Trash2 } from "lucide-react";
 import { type Flow } from "@/lib/api";
 
 interface FlowCardProps {
   flow: Flow;
   agentNames?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function FlowCard({ flow, agentNames }: FlowCardProps) {
+export function FlowCard({ flow, agentNames, onEdit, onDelete }: FlowCardProps) {
   const nodeCount = flow.graph_json?.nodes?.length || 0;
-  
+
   return (
     <Card className="transition-all duration-200 hover:shadow-lg-custom">
       <CardHeader>
@@ -26,9 +29,21 @@ export function FlowCard({ flow, agentNames }: FlowCardProps) {
               </CardDescription>
             </div>
           </div>
-          <Badge variant="outline" className="ml-2">
-            {nodeCount} {nodeCount === 1 ? "node" : "nodes"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">
+              {nodeCount} {nodeCount === 1 ? "node" : "nodes"}
+            </Badge>
+            {onEdit && (
+              <Button variant="ghost" size="icon" onClick={onEdit} title="Edit flow">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button variant="ghost" size="icon" onClick={onDelete} title="Delete flow">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       {agentNames && (

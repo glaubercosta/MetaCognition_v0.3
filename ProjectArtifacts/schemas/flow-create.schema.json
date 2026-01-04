@@ -16,10 +16,11 @@
       "default": null,
       "title": "Description"
     },
-        "graph_json": {
-            "title": "Graph Json",
-            "type": "object"
-        }
+    "graph_json": {
+      "additionalProperties": true,
+      "title": "Graph Json",
+      "type": "object"
+    }
   },
   "required": [
     "name",

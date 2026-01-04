@@ -179,6 +179,24 @@ export const createFlow = async (flow: Omit<Flow, "id" | "created_at" | "updated
   return payload;
 };
 
+export const updateFlow = async (id: string, flow: Partial<Flow>): Promise<Flow> => {
+  const response = await fetch(`${API_BASE_URL}/flows/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(flow),
+  });
+  if (!response.ok) throw new Error("Failed to update flow");
+  const payload = (await response.json()) as Flow;
+  return payload;
+};
+
+export const deleteFlow = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/flows/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete flow");
+};
+
 // Orchestration
 export const runOrchestration = async (request: OrchestrationRequest): Promise<OrchestrationResult> => {
   const response = await fetch(`${API_BASE_URL}/orchestrate/run`, {

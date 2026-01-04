@@ -1,0 +1,93 @@
+{
+  "note": "Estes payloads podem ser usados para criar fluxos manualmente via UI ou API",
+  "examples": [
+    {
+      "name": "Code Review Workflow",
+      "description": "Complete code review process from development to deployment",
+      "graph_json": {
+        "nodes": [
+          {"id": "BACKEND_DEV_ID", "type": "agent", "label": "Backend Developer"},
+          {"id": "CODE_REVIEWER_ID", "type": "agent", "label": "Code Reviewer"},
+          {"id": "QA_ENGINEER_ID", "type": "agent", "label": "QA Engineer"},
+          {"id": "DEVOPS_ENGINEER_ID", "type": "agent", "label": "DevOps Engineer"}
+        ],
+        "edges": [
+          {"from": "BACKEND_DEV_ID", "to": "CODE_REVIEWER_ID", "label": "submit_pr"},
+          {"from": "CODE_REVIEWER_ID", "to": "QA_ENGINEER_ID", "label": "approved"},
+          {"from": "QA_ENGINEER_ID", "to": "DEVOPS_ENGINEER_ID", "label": "tests_passed"}
+        ]
+      }
+    },
+    {
+      "name": "API Development Pipeline",
+      "description": "End-to-end API development from design to production",
+      "graph_json": {
+        "nodes": [
+          {"id": "API_DESIGNER_ID", "type": "agent", "label": "API Designer"},
+          {"id": "BACKEND_DEV_ID", "type": "agent", "label": "Backend Developer"},
+          {"id": "SECURITY_ENGINEER_ID", "type": "agent", "label": "Security Engineer"},
+          {"id": "DEVOPS_ENGINEER_ID", "type": "agent", "label": "DevOps Engineer"}
+        ],
+        "edges": [
+          {"from": "API_DESIGNER_ID", "to": "BACKEND_DEV_ID", "label": "openapi_spec"},
+          {"from": "BACKEND_DEV_ID", "to": "SECURITY_ENGINEER_ID", "label": "implementation_complete"},
+          {"from": "SECURITY_ENGINEER_ID", "to": "DEVOPS_ENGINEER_ID", "label": "security_approved"}
+        ]
+      }
+    },
+    {
+      "name": "Database Schema Evolution",
+      "description": "Safe database migration workflow with reviews and rollback plan",
+      "graph_json": {
+        "nodes": [
+          {"id": "DB_ARCHITECT_ID", "type": "agent", "label": "Database Architect"},
+          {"id": "BACKEND_DEV_ID", "type": "agent", "label": "Backend Developer"},
+          {"id": "CODE_REVIEWER_ID", "type": "agent", "label": "Code Reviewer"},
+          {"id": "QA_ENGINEER_ID", "type": "agent", "label": "QA Engineer"}
+        ],
+        "edges": [
+          {"from": "DB_ARCHITECT_ID", "to": "BACKEND_DEV_ID", "label": "migration_scripts"},
+          {"from": "BACKEND_DEV_ID", "to": "CODE_REVIEWER_ID", "label": "code_updated"},
+          {"from": "CODE_REVIEWER_ID", "to": "QA_ENGINEER_ID", "label": "review_approved"}
+        ]
+      }
+    },
+    {
+      "name": "Security Audit Flow",
+      "description": "Comprehensive security review for new features",
+      "graph_json": {
+        "nodes": [
+          {"id": "BACKEND_DEV_ID", "type": "agent", "label": "Backend Developer"},
+          {"id": "FRONTEND_DEV_ID", "type": "agent", "label": "Frontend Developer"},
+          {"id": "SECURITY_ENGINEER_ID", "type": "agent", "label": "Security Engineer"},
+          {"id": "CODE_REVIEWER_ID", "type": "agent", "label": "Code Reviewer"}
+        ],
+        "edges": [
+          {"from": "BACKEND_DEV_ID", "to": "SECURITY_ENGINEER_ID", "label": "backend_ready"},
+          {"from": "FRONTEND_DEV_ID", "to": "SECURITY_ENGINEER_ID", "label": "frontend_ready"},
+          {"from": "SECURITY_ENGINEER_ID", "to": "CODE_REVIEWER_ID", "label": "vulnerabilities_fixed"}
+        ]
+      }
+    },
+    {
+      "name": "Microservice Deployment",
+      "description": "Deploy microservice with automated testing and monitoring",
+      "graph_json": {
+        "nodes": [
+          {"id": "BACKEND_DEV_ID", "type": "agent", "label": "Backend Developer"},
+          {"id": "QA_ENGINEER_ID", "type": "agent", "label": "QA Engineer"},
+          {"id": "DEVOPS_ENGINEER_ID", "type": "agent", "label": "DevOps Engineer"}
+        ],
+        "edges": [
+          {"from": "BACKEND_DEV_ID", "to": "QA_ENGINEER_ID", "label": "service_ready"},
+          {"from": "QA_ENGINEER_ID", "to": "DEVOPS_ENGINEER_ID", "label": "tests_passed"}
+        ]
+      }
+    }
+  ],
+  "instructions": {
+    "via_ui": "1. Copie o payload (name, description, graph_json)\n2. Substitua os IDs dos agentes pelos IDs reais do seu banco\n3. Cole no formulário de criação de fluxo",
+    "via_api": "Use o comando PowerShell abaixo substituindo os IDs:\n\n$body = @{\n  name = 'Code Review Workflow'\n  description = 'Complete code review process'\n  graph_json = @{\n    nodes = @(\n      @{id='REAL_BACKEND_ID'},\n      @{id='REAL_REVIEWER_ID'}\n    )\n    edges = @(\n      @{from='REAL_BACKEND_ID'; to='REAL_REVIEWER_ID'; label='submit_pr'}\n    )\n  }\n} | ConvertTo-Json -Depth 10\n\nInvoke-RestMethod -Uri http://localhost:8000/flows -Method POST -Body $body -ContentType 'application/json'"
+  },
+  "note_about_ids": "IMPORTANTE: Os IDs como 'BACKEND_DEV_ID' são placeholders. Você precisa substituí-los pelos IDs reais dos agentes criados no seu banco de dados. Você pode obter os IDs fazendo GET /agents ou consultando o banco diretamente."
+}

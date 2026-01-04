@@ -1,0 +1,4 @@
+services:
+  orchestrator:
+    env_file:
+      - .env.staging
